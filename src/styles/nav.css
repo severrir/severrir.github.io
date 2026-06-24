@@ -1,0 +1,96 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px clamp(18px, 4vw, 48px);
+  z-index: 20;
+}
+
+/* faint scrim so the header reads cleanly over the scene */
+.nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(8, 14, 16, 0.78) 0%, rgba(8, 14, 16, 0) 100%);
+}
+
+.nav__brand {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.18em;
+  padding-left: 0.18em;
+  color: var(--space-text);
+  transition: color 0.25s ease;
+}
+
+.nav__brand:hover {
+  color: var(--accent-glow);
+}
+
+.nav__brand-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #eafffd, #3aafa9);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.85);
+}
+
+.nav__links {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav__link--btn {
+  font-family: "Manrope", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--space-text);
+  background: rgba(222, 242, 241, 0.03);
+  border: 1px solid var(--space-border);
+  border-radius: 10px;
+  padding: 9px 16px;
+  min-height: 40px;
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease;
+}
+
+.nav__link--btn:hover,
+.nav__link--btn.is-active {
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent-glow);
+}
+
+.nav__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: var(--space-muted);
+  border: 1px solid transparent;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.nav__icon:hover {
+  color: var(--space-text);
+  border-color: var(--space-border);
+  background: rgba(222, 242, 241, 0.03);
+}

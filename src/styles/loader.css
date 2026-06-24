@@ -1,0 +1,218 @@
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 44px;
+  background: radial-gradient(130% 110% at 50% 42%, #103035 0%, #0a1316 55%, #070f11 100%);
+  overflow: hidden;
+}
+
+.loader__stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 18% 28%, rgba(254, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 72% 62%, rgba(58, 175, 169, 0.6), transparent),
+    radial-gradient(1.4px 1.4px at 42% 78%, rgba(254, 255, 255, 0.45), transparent),
+    radial-gradient(1px 1px at 86% 22%, rgba(222, 242, 241, 0.55), transparent),
+    radial-gradient(1px 1px at 12% 68%, rgba(254, 255, 255, 0.45), transparent),
+    radial-gradient(1.3px 1.3px at 58% 14%, rgba(43, 122, 120, 0.55), transparent);
+  opacity: 0;
+  animation: loaderStars 0.5s ease 0s forwards;
+}
+
+@keyframes loaderStars {
+  to {
+    opacity: 0.5;
+  }
+}
+
+.loader__system {
+  width: clamp(200px, 42vw, 280px);
+  aspect-ratio: 1;
+}
+
+.loader__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* orbit ring traces itself */
+.loader__orbit-ring {
+  fill: none;
+  stroke: #3aafa9;
+  stroke-width: 1;
+  stroke-opacity: 0.55;
+  stroke-dasharray: 440;
+  stroke-dashoffset: 440;
+  animation: loaderTrace 0.7s cubic-bezier(0.65, 0, 0.35, 1) 0.05s forwards;
+}
+
+@keyframes loaderTrace {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* sun ignites */
+.loader__sun {
+  fill: url(#sunGrad);
+  transform-origin: 100px 100px;
+  transform: scale(0);
+  animation: loaderIgnite 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0s both;
+}
+
+.loader__sun-halo {
+  fill: #2b7a78;
+  opacity: 0;
+  transform-origin: 100px 100px;
+  animation: loaderHalo 2.6s ease-in-out 0.9s infinite;
+}
+
+@keyframes loaderIgnite {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes loaderHalo {
+  0%,
+  100% {
+    opacity: 0.12;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.22;
+    transform: scale(1.25);
+  }
+}
+
+/* planet rides the lane after the ring is drawn */
+.loader__orbit {
+  transform-origin: 100px 100px;
+  opacity: 0;
+  animation: loaderPlanetIn 0.3s ease 0.6s forwards,
+    loaderSpin 3.4s linear 0.6s infinite;
+}
+
+.loader__planet {
+  fill: #def2f1;
+  filter: drop-shadow(0 0 6px rgba(111, 227, 220, 0.85));
+}
+
+@keyframes loaderPlanetIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes loaderSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* brand */
+.loader__brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  z-index: 1;
+}
+
+.loader__name {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(26px, 5.5vw, 40px);
+  color: #eafffd;
+  letter-spacing: 0.7em;
+  padding-left: 0.7em;
+  opacity: 0;
+  filter: blur(6px);
+  animation: loaderName 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+@keyframes loaderName {
+  to {
+    opacity: 1;
+    filter: blur(0);
+    letter-spacing: 0.26em;
+    padding-left: 0.26em;
+  }
+}
+
+.loader__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7ba6a3;
+  opacity: 0;
+  animation: loaderName 0.5s ease 0.35s both;
+}
+
+.loader__dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.loader__dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #3aafa9;
+  animation: loaderDot 1.2s ease-in-out infinite;
+}
+
+.loader__dots i:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.loader__dots i:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes loaderDot {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader__orbit-ring {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+  .loader__sun,
+  .loader__orbit,
+  .loader__name,
+  .loader__label,
+  .loader__stars {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}

@@ -1,0 +1,237 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Teal system palette
+     #17252a · #2b7a78 · #3aafa9 · #def2f1 · #feffff */
+  --space-void: #0c1518;
+  --space-deep: #17252a;
+  --space-panel: rgba(23, 37, 42, 0.72);
+  --space-border: rgba(58, 175, 169, 0.2);
+  --space-muted: #7ba6a3;
+  --space-text: #def2f1;
+  --space-bright: #feffff;
+  --accent: #3aafa9;
+  --accent-glow: #6fe3dc;
+
+  /* shared rgb channels for glows/shadows */
+  --accent-rgb: 58, 175, 169;
+  --glow-rgb: 111, 227, 220;
+  --mint-rgb: 222, 242, 241;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--space-void);
+  color: var(--space-text);
+  font-family: "Manrope", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  position: relative;
+  width: 100%;
+}
+
+/* The 3D canvas sits behind everything */
+.scene-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.scene-canvas:active {
+  cursor: grabbing;
+}
+
+/* Faint vignette + grain layered over the scene for cinematic depth */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 0%, transparent 52%, rgba(8, 14, 16, 0.6) 100%),
+    radial-gradient(100% 100% at 50% 120%, rgba(var(--accent-rgb), 0.07), transparent 60%);
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Overlay UI layer — transparent to pointer events so the 3D scene stays
+   fully draggable; individual controls opt back in with pointer-events: auto. */
+.ui-layer {
+  position: relative;
+  width: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Shared chip / tag */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--space-muted);
+  padding: 5px 10px;
+  border: 1px solid var(--space-border);
+  border-radius: 999px;
+  background: rgba(var(--accent-rgb), 0.05);
+  white-space: nowrap;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.tag-chip:hover {
+  color: var(--accent-glow);
+  border-color: rgba(var(--accent-rgb), 0.45);
+}
+
+/* Buttons shared */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), background 0.25s ease,
+    border-color 0.25s ease, box-shadow 0.25s ease;
+  text-decoration: none;
+  min-height: 44px;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--accent-glow), var(--accent));
+  color: #06201d;
+  box-shadow: 0 8px 28px rgba(var(--accent-rgb), 0.32);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 12px 40px rgba(var(--accent-rgb), 0.5);
+}
+
+.btn-ghost {
+  background: rgba(222, 242, 241, 0.03);
+  border-color: var(--space-border);
+  color: var(--space-text);
+}
+
+.btn-ghost:hover {
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.08);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-glow);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Loader cross-fade into the scene */
+.loader-fade {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  opacity: 1;
+  transition: opacity 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.loader-fade.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Whole UI layer eases up + in once the scene is revealed */
+.app-reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 1s ease, transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Floating planet label (rendered via drei Html in 3D space) */
+.planet-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgba(12, 21, 24, 0.82);
+  border: 1px solid var(--space-border);
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+  transform: translateY(-6px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.planet-label__title {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--space-text);
+}
+
+.planet-label__sub {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--space-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.05ms !important;
+  }
+}

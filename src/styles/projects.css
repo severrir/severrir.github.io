@@ -1,0 +1,200 @@
+.card {
+  position: fixed;
+  top: 92px;
+  right: clamp(16px, 4vw, 48px);
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 132px);
+  overflow: hidden;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(23, 37, 42, 0.95), rgba(12, 21, 24, 0.97));
+  border: 1px solid var(--space-border);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6),
+    0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent) inset;
+  backdrop-filter: blur(18px);
+
+  /* materialize: grows from the planet's screen position (transform-origin set inline) */
+  opacity: 0;
+  transform: scale(0.22);
+  transition: transform 0.46s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+  will-change: transform, opacity;
+}
+
+.card.is-shown {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ---- 3D stage with the spinning mini planet ---- */
+.card__stage {
+  position: relative;
+  height: 188px;
+  flex: 0 0 auto;
+  background: radial-gradient(120% 120% at 50% 20%, rgba(var(--accent-rgb), 0.06), transparent 70%);
+  border-bottom: 1px solid var(--space-border);
+}
+
+.card__stage canvas {
+  display: block;
+}
+
+.card__stage-fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 55%, rgba(12, 21, 24, 0.92) 100%);
+}
+
+.card__index {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.card__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(12, 21, 24, 0.6);
+  border: 1px solid var(--space-border);
+  color: var(--space-muted);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.25s ease, background 0.2s ease;
+}
+
+.card__close:hover {
+  color: var(--space-text);
+  border-color: var(--accent);
+  background: rgba(12, 21, 24, 0.85);
+  transform: rotate(90deg);
+}
+
+/* ---- body ---- */
+.card__body {
+  padding: 22px 26px 24px;
+  overflow-y: auto;
+}
+
+.card__blurb {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--space-muted);
+}
+
+.card__title {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(26px, 4vw, 34px);
+  line-height: 1.08;
+  margin: 8px 0 16px;
+  color: var(--space-bright);
+}
+
+.card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.card__desc {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #b9d6d3;
+  margin: 0 0 24px;
+}
+
+.card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.card__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--space-border);
+  padding-top: 16px;
+}
+
+.card__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: "Manrope", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--space-muted);
+  padding: 8px 6px;
+  border-radius: 8px;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.card__nav-btn:hover {
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.card__repo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--space-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.card__repo-link:hover:not(.is-muted) {
+  color: var(--accent);
+}
+
+.card__repo-link.is-muted {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .card {
+    top: auto;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-height: 86vh;
+    border-radius: 22px 22px 0 0;
+    transform-origin: 50% 100% !important;
+    transform: translateY(40px) scale(0.96);
+  }
+  .card.is-shown {
+    transform: translateY(0) scale(1);
+  }
+  .card__body {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+  .card__stage {
+    height: 150px;
+  }
+}
