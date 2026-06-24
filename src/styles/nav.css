@@ -17,7 +17,7 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(8, 14, 16, 0.78) 0%, rgba(8, 14, 16, 0) 100%);
+  background: linear-gradient(180deg, rgba(var(--void-rgb), 0.82) 0%, rgba(var(--void-rgb), 0) 100%);
 }
 
 .nav__brand {
@@ -45,8 +45,8 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #eafffd, #3aafa9);
-  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.85);
+  background: radial-gradient(circle at 35% 35%, #fff2d6, var(--warm-b));
+  box-shadow: 0 0 12px rgba(var(--warm-rgb), 0.85);
 }
 
 .nav__links {
@@ -61,7 +61,7 @@
   font-weight: 600;
   font-size: 14px;
   color: var(--space-text);
-  background: rgba(222, 242, 241, 0.03);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--space-border);
   border-radius: 10px;
   padding: 9px 16px;
@@ -92,5 +92,5 @@
 .nav__icon:hover {
   color: var(--space-text);
   border-color: var(--space-border);
-  background: rgba(222, 242, 241, 0.03);
+  background: rgba(255, 255, 255, 0.03);
 }

@@ -3,22 +3,29 @@
 @tailwind utilities;
 
 :root {
-  /* Teal system palette
-     #17252a · #2b7a78 · #3aafa9 · #def2f1 · #feffff */
-  --space-void: #0c1518;
-  --space-deep: #17252a;
-  --space-panel: rgba(23, 37, 42, 0.72);
-  --space-border: rgba(58, 175, 169, 0.2);
-  --space-muted: #7ba6a3;
-  --space-text: #def2f1;
-  --space-bright: #feffff;
-  --accent: #3aafa9;
-  --accent-glow: #6fe3dc;
+  /* Deep-space system palette
+     bg #05060A · surface #0D0F18 · elevated #13151F · border #1F2230
+     text #F2F3F7 · muted #9CA3B5 · accent #6FE3FF · warm #FFB84D→#FF7A1A */
+  --space-void: #05060a;
+  --space-deep: #0d0f18;
+  --space-elevated: #13151f;
+  --space-panel: rgba(13, 15, 24, 0.72);
+  --space-border: rgba(159, 168, 192, 0.14);
+  --space-muted: #9ca3b5;
+  --space-text: #f2f3f7;
+  --space-bright: #ffffff;
+  --accent: #6fe3ff;
+  --accent-glow: #a6f0ff;
+
+  /* warm focal accent — the sun / primary CTA */
+  --warm-a: #ffb84d;
+  --warm-b: #ff7a1a;
 
   /* shared rgb channels for glows/shadows */
-  --accent-rgb: 58, 175, 169;
-  --glow-rgb: 111, 227, 220;
-  --mint-rgb: 222, 242, 241;
+  --accent-rgb: 111, 227, 255;
+  --glow-rgb: 111, 227, 255;
+  --warm-rgb: 255, 138, 40;
+  --void-rgb: 5, 6, 10;
 
   color-scheme: dark;
 }
@@ -60,6 +67,17 @@ body {
   cursor: grab;
 }
 
+/* Shown only if the 3D scene errors out — keeps the page from going white */
+.scene-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 50% 45%, rgba(var(--warm-rgb), 0.12), transparent 70%),
+    radial-gradient(120% 100% at 50% 50%, #0a0c14 0%, var(--space-void) 70%);
+}
+
 .scene-canvas:active {
   cursor: grabbing;
 }
@@ -71,8 +89,9 @@ body {
   z-index: 1;
   pointer-events: none;
   background:
-    radial-gradient(120% 90% at 50% 0%, transparent 52%, rgba(8, 14, 16, 0.6) 100%),
-    radial-gradient(100% 100% at 50% 120%, rgba(var(--accent-rgb), 0.07), transparent 60%);
+    radial-gradient(120% 90% at 50% 0%, transparent 50%, rgba(var(--void-rgb), 0.7) 100%),
+    radial-gradient(90% 80% at 50% 115%, rgba(var(--warm-rgb), 0.1), transparent 60%),
+    radial-gradient(70% 60% at 12% 18%, rgba(var(--accent-rgb), 0.06), transparent 60%);
 }
 
 .grain {
@@ -142,17 +161,17 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, var(--accent-glow), var(--accent));
-  color: #06201d;
-  box-shadow: 0 8px 28px rgba(var(--accent-rgb), 0.32);
+  background: linear-gradient(135deg, var(--warm-a), var(--warm-b));
+  color: #2a1402;
+  box-shadow: 0 8px 28px rgba(var(--warm-rgb), 0.35);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 12px 40px rgba(var(--accent-rgb), 0.5);
+  box-shadow: 0 12px 44px rgba(var(--warm-rgb), 0.55);
 }
 
 .btn-ghost {
-  background: rgba(222, 242, 241, 0.03);
+  background: rgba(255, 255, 255, 0.03);
   border-color: var(--space-border);
   color: var(--space-text);
 }
@@ -160,6 +179,7 @@ body {
 .btn-ghost:hover {
   border-color: rgba(var(--accent-rgb), 0.5);
   background: rgba(var(--accent-rgb), 0.08);
+  color: var(--accent-glow);
 }
 
 :focus-visible {
@@ -202,7 +222,7 @@ body {
   gap: 2px;
   padding: 7px 12px;
   border-radius: 10px;
-  background: rgba(12, 21, 24, 0.82);
+  background: rgba(13, 15, 24, 0.85);
   border: 1px solid var(--space-border);
   backdrop-filter: blur(8px);
   white-space: nowrap;

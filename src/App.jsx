@@ -1,24 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import Lenis from "lenis";
 import Scene from "@/scene/Scene.jsx";
+import SceneBoundary from "@/scene/SceneBoundary.jsx";
 import BoxLoader from "@/components/ui/box-loader.jsx";
 import Nav from "@/ui/Nav.jsx";
-import Hero from "@/ui/Hero.jsx";
+import NameBeat from "@/ui/beats/NameBeat.jsx";
+import WhatIDoBeat from "@/ui/beats/WhatIDoBeat.jsx";
+import SystemBeat from "@/ui/beats/SystemBeat.jsx";
 import ProjectCard from "@/ui/ProjectCard.jsx";
 import AboutSection from "@/ui/AboutSection.jsx";
 import ContactSection from "@/ui/ContactSection.jsx";
 import OnboardingHint from "@/ui/OnboardingHint.jsx";
 import { projects } from "@/data/projects.js";
+import { INTERACTIVE_AT, stageProgress } from "@/scene/cameraStages.js";
 
 const MIN_LOADER_MS = 950;
-const HARD_CAP_MS = 1700; // absolute ceiling: reveal even if shaders/scene are still compiling
+const HARD_CAP_MS = 1700; // absolute ceiling: reveal even if the scene is still compiling
 const FADE_MS = 480;
 const CARD_EXIT_MS = 320;
-const HINT_INTENSIFY_MS = 5500; // grow louder, never fade out, until the visitor actually engages
-
-function scrollToId(id) {
-  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  document.getElementById(id)?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-}
+const HINT_INTENSIFY_MS = 5500;
 
 export default function App() {
   const [sceneReady, setSceneReady] = useState(false);
@@ -28,38 +28,76 @@ export default function App() {
 
   const [activeIndex, setActiveIndex] = useState(null);
   const [cardPhase, setCardPhase] = useState("in"); // in | out
-  const [cardOrigin, setCardOrigin] = useState(null); // {x,y} screen px
+  const [cardOrigin, setCardOrigin] = useState(null);
+  const [interactive, setInteractive] = useState(false); // true once Beat 3 is reached
   const [hintActive, setHintActive] = useState(false);
   const [hintIntense, setHintIntense] = useState(false);
+
+  const lenisRef = useRef(null);
   const exitTimer = useRef();
   const hintTimer = useRef();
+  const hintEngaged = useRef(false);
 
   const ready = (sceneReady && minElapsed) || hardCapped;
   const revealed = loaderState !== "show";
   const overview = activeIndex === null;
 
-  const dismissHint = useCallback(() => {
-    clearTimeout(hintTimer.current);
-    setHintActive(false);
-    setHintIntense(false);
+  // ── Smooth scroll (Lenis) ───────────────────────────────────────────────
+  useEffect(() => {
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const lenis = new Lenis({
+      duration: 1.15,
+      smoothWheel: !reduce,
+      syncTouch: false,
+      wheelMultiplier: 1,
+    });
+    lenisRef.current = lenis;
+
+    let raf;
+    const loop = (t) => {
+      lenis.raf(t);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+
+    // Flip interactivity when scroll crosses into / out of Beat 3. Only touches
+    // React state on an actual boundary change — never every scroll frame.
+    const onScroll = () => {
+      const next = stageProgress() >= INTERACTIVE_AT;
+      setInteractive((cur) => (cur !== next ? next : cur));
+    };
+    lenis.on("scroll", onScroll);
+    onScroll();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      lenis.destroy();
+      lenisRef.current = null;
+    };
   }, []);
 
+  const scrollTo = useCallback((target) => {
+    const lenis = lenisRef.current;
+    if (!lenis) return;
+    if (typeof target === "number") lenis.scrollTo(target);
+    else {
+      const el = typeof target === "string" ? document.getElementById(target) : target;
+      if (el) lenis.scrollTo(el);
+    }
+  }, []);
+
+  // ── Loader timing ───────────────────────────────────────────────────────
   useEffect(() => {
     const t = setTimeout(() => setMinElapsed(true), MIN_LOADER_MS);
     return () => clearTimeout(t);
   }, []);
-
-  // Absolute ceiling: never let slow shader/GL setup hold the loader past
-  // this, even if the scene hasn't reported ready yet.
   useEffect(() => {
     const t = setTimeout(() => setHardCapped(true), HARD_CAP_MS);
     return () => clearTimeout(t);
   }, []);
-
   useEffect(() => {
     if (ready) setLoaderState((s) => (s === "show" ? "leaving" : s));
   }, [ready]);
-
   useEffect(() => {
     if (loaderState === "leaving") {
       const t = setTimeout(() => setLoaderState("gone"), FADE_MS);
@@ -67,18 +105,25 @@ export default function App() {
     }
   }, [loaderState]);
 
-  // Onboarding cue: nudge first-time visitors that the scene is interactive.
-  // It does NOT fade out on a fixed timer — it only goes away the instant the
-  // visitor actually clicks or drags (see dismissHint / onInteract below). If
-  // they still haven't engaged after a few seconds, it gets louder, not quieter.
+  // ── Onboarding hint (Beat 3 only) ───────────────────────────────────────
+  const dismissHint = useCallback(() => {
+    clearTimeout(hintTimer.current);
+    hintEngaged.current = true;
+    setHintActive(false);
+    setHintIntense(false);
+  }, []);
+
   useEffect(() => {
-    if (revealed) {
+    if (revealed && interactive && overview && !hintEngaged.current) {
       setHintActive(true);
       hintTimer.current = setTimeout(() => setHintIntense(true), HINT_INTENSIFY_MS);
       return () => clearTimeout(hintTimer.current);
     }
-  }, [revealed]);
+    setHintActive(false);
+    setHintIntense(false);
+  }, [revealed, interactive, overview]);
 
+  // ── Project selection ───────────────────────────────────────────────────
   const selectProject = useCallback(
     (i, origin = null) => {
       dismissHint();
@@ -96,23 +141,39 @@ export default function App() {
     exitTimer.current = setTimeout(() => setActiveIndex(null), CARD_EXIT_MS);
   }, []);
 
+  // Lock scroll while a card is open so Beat 3 stays put during exploration.
+  useEffect(() => {
+    const lenis = lenisRef.current;
+    if (!lenis) return;
+    if (activeIndex !== null) lenis.stop();
+    else lenis.start();
+  }, [activeIndex]);
+
   const goHome = useCallback(() => {
     setCardPhase("out");
     clearTimeout(exitTimer.current);
     exitTimer.current = setTimeout(() => setActiveIndex(null), CARD_EXIT_MS);
-    scrollToId("top-anchor");
-  }, []);
+    requestAnimationFrame(() => {
+      lenisRef.current?.start();
+      scrollTo(0);
+    });
+  }, [scrollTo]);
 
-  const jumpTo = useCallback((id) => {
-    setCardPhase("out");
-    clearTimeout(exitTimer.current);
-    exitTimer.current = setTimeout(() => setActiveIndex(null), CARD_EXIT_MS);
-    // let the card start dissolving before the page scrolls
-    requestAnimationFrame(() => scrollToId(id));
-  }, []);
+  const jumpTo = useCallback(
+    (id) => {
+      setCardPhase("out");
+      clearTimeout(exitTimer.current);
+      exitTimer.current = setTimeout(() => setActiveIndex(null), CARD_EXIT_MS);
+      requestAnimationFrame(() => {
+        lenisRef.current?.start();
+        scrollTo(id);
+      });
+    },
+    [scrollTo]
+  );
 
   const step = useCallback((dir) => {
-    setCardOrigin(null); // keyboard paging grows from card center
+    setCardOrigin(null);
     setCardPhase("in");
     setActiveIndex((i) => (i === null ? 0 : (i + dir + projects.length) % projects.length));
   }, []);
@@ -131,14 +192,17 @@ export default function App() {
 
   return (
     <>
-      <Scene
-        activeIndex={activeIndex}
-        onSelect={selectProject}
-        onReady={() => setSceneReady(true)}
-        hintActive={hintActive}
-        hintIntense={hintIntense}
-        onInteract={dismissHint}
-      />
+      <SceneBoundary>
+        <Scene
+          activeIndex={activeIndex}
+          onSelect={selectProject}
+          onReady={() => setSceneReady(true)}
+          hintActive={hintActive}
+          hintIntense={hintIntense}
+          onInteract={dismissHint}
+          interactive={interactive}
+        />
+      </SceneBoundary>
 
       <div className="atmosphere" aria-hidden="true" />
       <div className="grain" aria-hidden="true" />
@@ -147,9 +211,11 @@ export default function App() {
         <span id="top-anchor" aria-hidden="true" />
         <Nav onHome={goHome} onJump={jumpTo} />
 
-        <Hero visible={overview && revealed} onSelect={selectProject} activeIndex={activeIndex} />
+        <NameBeat visible={revealed} onNext={() => jumpTo("beat-what")} />
+        <WhatIDoBeat onNext={() => jumpTo("beat-system")} />
+        <SystemBeat onNext={() => jumpTo("about-section")} />
 
-        <OnboardingHint active={hintActive && overview} intense={hintIntense} />
+        <OnboardingHint active={hintActive && overview && interactive} intense={hintIntense} />
 
         {activeIndex !== null && (
           <ProjectCard

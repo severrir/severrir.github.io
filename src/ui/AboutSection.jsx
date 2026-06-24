@@ -1,15 +1,25 @@
+import { motion } from "framer-motion";
 import { about } from "@/data/projects.js";
 import "@/styles/sections.css";
 
-// A real, scrollable section — not a popup — so the site reads as a full
-// portfolio with substance behind the 3D centerpiece, not just a demo.
+// Beat 4a — the tech-stack panel. The bio narrative lives up in Beat 2 ("What
+// I do"), so this beat focuses on the stack chips. Reveals as it scrolls in.
 export default function AboutSection() {
   return (
     <section id="about-section" className="about-section">
-      <div className="about-section__inner">
-        <span className="section-eyebrow">About</span>
-        <h2 className="about-section__title">Systems developer, not an artist.</h2>
-        <p className="about-section__bio">{about.bio}</p>
+      <motion.div
+        className="about-section__inner"
+        initial={{ opacity: 0, y: 36 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <span className="section-eyebrow">The Stack</span>
+        <h2 className="about-section__title">What I reach for, day to day.</h2>
+        <p className="about-section__bio">
+          Systems developer, not an artist — I write the Luau, architecture and
+          security underneath the games, not the models or builds.
+        </p>
 
         <span className="section-eyebrow about-section__stack-label">Tech Stack</span>
         <div className="about-section__chips">
@@ -19,7 +29,7 @@ export default function AboutSection() {
             </span>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

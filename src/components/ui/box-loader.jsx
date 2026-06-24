@@ -14,9 +14,9 @@ export function BoxLoader({ className }) {
         <svg viewBox="0 0 200 200" className="loader__svg">
           <defs>
             <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#eafffd" />
-              <stop offset="45%" stopColor="#3aafa9" />
-              <stop offset="100%" stopColor="#2b7a78" />
+              <stop offset="0%" stopColor="#fff2d6" />
+              <stop offset="50%" stopColor="#ffb84d" />
+              <stop offset="100%" stopColor="#ff7a1a" />
             </radialGradient>
             <filter id="sunGlow" x="-80%" y="-80%" width="260%" height="260%">
               <feGaussianBlur stdDeviation="6" result="b" />

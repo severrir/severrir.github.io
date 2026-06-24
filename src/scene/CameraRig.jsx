@@ -1,41 +1,39 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { STAGE, INTERACTIVE_AT, stageProgress, sampleStage } from "@/scene/cameraStages.js";
 
-const OVERVIEW_POS = new THREE.Vector3(0, 17, 46);
-const OVERVIEW_TARGET = new THREE.Vector3(0, 0, 0);
-
-// Drives cinematic fly-to-planet moves with a damped spring (slight overshoot
-// then settle). While focused, OrbitControls input is disabled; at rest the
-// controls take over and slowly auto-rotate so the system never sits frozen.
+// Three behaviours, chosen per-frame:
+//   1. FOCUS     — a planet is selected: damped fly-to spring (Beat 3 only).
+//   2. RETURN    — a card just closed: spring back to the overview pose.
+//   3. FREE      — Beat 3, no selection: OrbitControls owns the camera.
+//   4. CINEMATIC — Beats 1–2: camera is driven directly by scroll position.
 export default function CameraRig({ controlsRef, anchorRefs, activeIndex, projects }) {
   const { camera } = useThree();
-  const mode = useRef("free"); // 'focus' | 'return' | 'free'
   const focusOffset = useRef(new THREE.Vector3());
-
-  const desiredPos = useRef(new THREE.Vector3().copy(OVERVIEW_POS));
-  const desiredTarget = useRef(new THREE.Vector3().copy(OVERVIEW_TARGET));
   const planetWorld = useRef(new THREE.Vector3());
+
+  const desiredPos = useRef(new THREE.Vector3().copy(STAGE.wide.pos));
+  const desiredTarget = useRef(new THREE.Vector3().copy(STAGE.wide.target));
 
   // spring state
   const posVel = useRef(new THREE.Vector3());
   const targetVel = useRef(new THREE.Vector3());
   const accel = useRef(new THREE.Vector3());
 
+  const returning = useRef(false);
+  const prevActive = useRef(null);
+
   useEffect(() => {
     posVel.current.set(0, 0, 0);
     targetVel.current.set(0, 0, 0);
 
-    // OrbitControls keeps decaying its own damping inertia every update()
-    // call regardless of `enabled` — if the user was mid-drag right before
-    // clicking, that leftover momentum gets added on top of our spring and
-    // shows up as a stutter/fight. Killing damping for the duration of the
-    // programmatic move makes OrbitControls zero that inertia instantly.
+    // Kill OrbitControls' own damping inertia for the duration of any
+    // programmatic move so it doesn't fight our spring.
     const controls = controlsRef.current;
     if (controls) controls.enableDamping = false;
 
     if (activeIndex !== null) {
-      mode.current = "focus";
       const anchor = anchorRefs.current[activeIndex]?.current;
       const sizeV = projects[activeIndex].visual.size;
       if (anchor) {
@@ -48,12 +46,14 @@ export default function CameraRig({ controlsRef, anchorRefs, activeIndex, projec
           .multiplyScalar(sizeV * 4.2 + 6)
           .add(new THREE.Vector3(0, sizeV * 2 + 2.2, 0));
       }
-    } else {
-      mode.current = "return";
+      returning.current = false;
+    } else if (prevActive.current !== null) {
+      // closed a card — fly back to overview before handing control over
+      returning.current = true;
     }
+    prevActive.current = activeIndex;
   }, [activeIndex, anchorRefs, projects, controlsRef]);
 
-  // semi-implicit damped-spring step toward `to`
   function spring(pos, vel, to, dt, stiffness, damping) {
     accel.current.copy(to).sub(pos).multiplyScalar(stiffness);
     accel.current.addScaledVector(vel, -damping);
@@ -61,12 +61,14 @@ export default function CameraRig({ controlsRef, anchorRefs, activeIndex, projec
     pos.addScaledVector(vel, dt);
   }
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const controls = controlsRef.current;
     if (!controls) return;
     const dt = Math.min(delta, 1 / 30);
+    const p = stageProgress();
 
-    if (mode.current === "focus" && activeIndex !== null) {
+    // 1. FOCUS — a planet is selected.
+    if (activeIndex !== null) {
       const anchor = anchorRefs.current[activeIndex]?.current;
       if (anchor) {
         anchor.getWorldPosition(planetWorld.current);
@@ -75,21 +77,34 @@ export default function CameraRig({ controlsRef, anchorRefs, activeIndex, projec
       }
       controls.enabled = false;
       controls.autoRotate = false;
-    } else if (mode.current === "return") {
-      desiredPos.current.copy(OVERVIEW_POS);
-      desiredTarget.current.copy(OVERVIEW_TARGET);
+      spring(camera.position, posVel.current, desiredPos.current, dt, 55, 14.6);
+      spring(controls.target, targetVel.current, desiredTarget.current, dt, 70, 16.6);
+      camera.lookAt(controls.target); // OrbitControls is off — re-aim ourselves
+      return;
+    }
+
+    // 2. RETURN — fly back to the overview pose after a card closes.
+    if (returning.current) {
+      desiredPos.current.copy(STAGE.overview.pos);
+      desiredTarget.current.copy(STAGE.overview.target);
       controls.enabled = false;
       controls.autoRotate = false;
+      spring(camera.position, posVel.current, desiredPos.current, dt, 55, 14.6);
+      spring(controls.target, targetVel.current, desiredTarget.current, dt, 70, 16.6);
+      camera.lookAt(controls.target);
       if (
-        camera.position.distanceTo(OVERVIEW_POS) < 0.5 &&
-        controls.target.distanceTo(OVERVIEW_TARGET) < 0.5
+        camera.position.distanceTo(STAGE.overview.pos) < 0.4 &&
+        controls.target.distanceTo(STAGE.overview.target) < 0.3
       ) {
-        mode.current = "free";
+        posVel.current.set(0, 0, 0);
+        targetVel.current.set(0, 0, 0);
+        returning.current = false;
       }
-    } else {
-      // free: user owns the camera; slow ambient drift keeps it alive.
-      // Re-enable damping only now that the programmatic move is over, so
-      // OrbitControls doesn't carry stale inertia into the handoff.
+      return;
+    }
+
+    // 3. FREE — Beat 3 reached, no selection: hand the camera to OrbitControls.
+    if (p >= INTERACTIVE_AT) {
       controls.enabled = true;
       controls.enableDamping = true;
       controls.autoRotate = true;
@@ -97,9 +112,18 @@ export default function CameraRig({ controlsRef, anchorRefs, activeIndex, projec
       return;
     }
 
-    // underdamped position spring => overshoot + settle; target a touch stiffer
-    spring(camera.position, posVel.current, desiredPos.current, dt, 55, 12.5);
-    spring(controls.target, targetVel.current, desiredTarget.current, dt, 72, 17);
+    // 4. CINEMATIC — Beats 1–2: drive the camera straight from scroll position.
+    // Lenis already smooths the scroll input; an extra lerp removes any residual
+    // step and a slow sway keeps the wide shots from feeling dead.
+    controls.enabled = false;
+    controls.autoRotate = false;
+    sampleStage(p, desiredPos.current, desiredTarget.current);
+    const sway = (1 - p) * 1.4; // strongest at the very top, fades toward Beat 3
+    desiredPos.current.x += Math.sin(state.clock.elapsedTime * 0.12) * sway;
+    desiredPos.current.y += Math.cos(state.clock.elapsedTime * 0.09) * sway * 0.4;
+    camera.position.lerp(desiredPos.current, 0.12);
+    controls.target.lerp(desiredTarget.current, 0.12);
+    camera.lookAt(controls.target);
   });
 
   return null;

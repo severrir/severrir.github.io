@@ -13,6 +13,11 @@ function Body({ visual }) {
   const material = useMemo(() => makePlanetMaterial(visual), [visual]);
   const { camera } = useThree();
 
+  // Stepping Next/Prev between projects rebuilds this material; dispose the old
+  // one (and on unmount) so GPU programs/uniforms don't accumulate over a
+  // session of card-hopping.
+  useEffect(() => () => material.dispose(), [material]);
+
   useEffect(() => {
     camera.position.set(POS.x, POS.y + 0.3, POS.z + 3.2);
     camera.lookAt(POS);
@@ -46,12 +51,14 @@ function Body({ visual }) {
 export default function MiniPlanet({ visual }) {
   return (
     <Canvas
-      dpr={[1, 2]}
-      gl={{ antialias: true, alpha: true }}
+      // Small card-embedded canvas: low DPR cap + low-power GPU hint so it
+      // doesn't contend with the main scene's context.
+      dpr={[1, 1.5]}
+      gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
       camera={{ fov: 32, near: 0.1, far: 50 }}
       style={{ width: "100%", height: "100%" }}
     >
-      <ambientLight intensity={0.22} color="#a9e6e2" />
+      <ambientLight intensity={0.24} color="#cdd6ee" />
       <Body visual={visual} />
     </Canvas>
   );

@@ -11,7 +11,7 @@ import Orbits from "@/scene/Orbits.jsx";
 import CameraRig from "@/scene/CameraRig.jsx";
 import { projects } from "@/data/projects.js";
 
-export default function Scene({ activeIndex, onSelect, onReady, hintActive, hintIntense, onInteract }) {
+export default function Scene({ activeIndex, onSelect, onReady, hintActive, hintIntense, onInteract, interactive }) {
   const controlsRef = useRef();
   const anchorRefs = useRef(projects.map(() => createRef()));
 
@@ -25,21 +25,38 @@ export default function Scene({ activeIndex, onSelect, onReady, hintActive, hint
   return (
     <Canvas
       className="scene-canvas"
-      dpr={isMobile ? [1, 1.5] : [1, 2]}
+      // r3f sets inline `position: relative; width/height: 100%` on its wrapper,
+      // which beats the .scene-canvas class and collapses the canvas to a thin
+      // strip. Override inline so the scene is a true full-viewport background.
+      style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh" }}
+      // Cap pixel ratio so 4K/retina displays don't render at 2x and tank the
+      // GPU. 1.75 is visually crisp but far cheaper than an uncapped 2–3x.
+      dpr={isMobile ? [1, 1.25] : [1, 1.75]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
-      camera={{ position: [0, 17, 46], fov: 50, near: 0.1, far: 600 }}
+      // Start at the Beat 1 wide shot so there's no jump when the loader fades.
+      camera={{ position: [0, 26, 92], fov: 50, near: 0.1, far: 600 }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.05;
+
+        // WebGL context loss (driver hiccup, GPU reset, long idle on some
+        // machines) otherwise leaves a permanently blank canvas. preventDefault
+        // lets the browser fire `webglcontextrestored`, and r3f rebuilds the
+        // scene from the React tree on restore — so it recovers instead of
+        // staying white.
+        const canvas = gl.domElement;
+        const onLost = (e) => e.preventDefault();
+        canvas.addEventListener("webglcontextlost", onLost, false);
+
         // Fire ready on the next frame so the first paint is complete.
         requestAnimationFrame(() => onReady?.());
       }}
     >
-      <color attach="background" args={["#0a1316"]} />
-      <fog attach="fog" args={["#0a1316", 72, 270]} />
+      <color attach="background" args={["#05060a"]} />
+      <fog attach="fog" args={["#05060a", 80, 290]} />
 
-      <ambientLight intensity={0.2} color="#a9e6e2" />
-      <hemisphereLight args={["#1f5c58", "#0a1316", 0.3]} />
+      <ambientLight intensity={0.18} color="#aab4d6" />
+      <hemisphereLight args={["#3a3550", "#05060a", 0.32]} />
 
       <Starfield count={starCount} />
       <Sun />
@@ -56,6 +73,7 @@ export default function Scene({ activeIndex, onSelect, onReady, hintActive, hint
           hint={hintActive && i === 0}
           hintIntense={hintIntense}
           onSelect={onSelect}
+          interactive={interactive}
         />
       ))}
 
@@ -80,13 +98,13 @@ export default function Scene({ activeIndex, onSelect, onReady, hintActive, hint
         projects={projects}
       />
 
-      <EffectComposer disableNormalPass multisampling={isMobile ? 0 : 4}>
+      <EffectComposer disableNormalPass multisampling={isMobile ? 0 : 2}>
         <Bloom
-          intensity={isMobile ? 0.95 : 1.4}
-          luminanceThreshold={0.48}
+          intensity={isMobile ? 0.9 : 1.3}
+          luminanceThreshold={0.5}
           luminanceSmoothing={0.9}
           mipmapBlur
-          radius={0.82}
+          radius={0.8}
         />
         <Vignette eskil={false} offset={0.22} darkness={0.78} />
       </EffectComposer>

@@ -9,7 +9,7 @@ const tmpVec = new THREE.Vector3();
 // One orbiting planet = one project. The pivot group spins around the sun;
 // the inner `anchor` group holds the planet so its world position can be
 // sampled by the CameraRig for fly-to focus.
-export default function Planet({ project, index, anchorRef, active, dimmed, hint, hintIntense, onSelect }) {
+export default function Planet({ project, index, anchorRef, active, dimmed, hint, hintIntense, onSelect, interactive }) {
   const { camera, size, gl } = useThree();
   const pivot = useRef();
   const body = useRef();
@@ -66,6 +66,8 @@ export default function Planet({ project, index, anchorRef, active, dimmed, hint
   });
 
   const handleClick = (e) => {
+    // Planets are only interactive once the scroll has reached Beat 3.
+    if (!interactive) return;
     e.stopPropagation();
     punchPending.current = true; // recorded in clock-time on next frame
     // project the planet to screen space so the card can grow out of it
@@ -82,6 +84,7 @@ export default function Planet({ project, index, anchorRef, active, dimmed, hint
   };
 
   const enter = (e) => {
+    if (!interactive) return;
     e.stopPropagation();
     setHovered(true);
     gl.domElement.style.cursor = "pointer";

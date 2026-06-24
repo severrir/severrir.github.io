@@ -23,32 +23,32 @@ export default function Sun() {
 
   return (
     <group>
-      {/* light cast onto the planets — cool teal-white starlight */}
-      <pointLight intensity={3.8} distance={140} decay={1.35} color="#d6fffb" />
+      {/* light cast onto the planets — warm golden starlight */}
+      <pointLight intensity={4.0} distance={150} decay={1.3} color="#ffd9a0" />
 
-      {/* hot core — near-white teal */}
+      {/* hot core — white-gold */}
       <Sphere ref={core} args={[3.3, 64, 64]}>
-        <meshBasicMaterial color="#eafffd" toneMapped={false} />
+        <meshBasicMaterial color="#fff2d6" toneMapped={false} />
       </Sphere>
 
-      {/* corona shell — bright teal */}
+      {/* corona shell — bright amber */}
       <Sphere ref={corona} args={[3.8, 48, 48]}>
         <meshBasicMaterial
-          color="#3aafa9"
+          color="#ffb84d"
           transparent
-          opacity={0.38}
+          opacity={0.4}
           side={THREE.BackSide}
           toneMapped={false}
           blending={THREE.AdditiveBlending}
         />
       </Sphere>
 
-      {/* outer atmospheric halo — deeper teal */}
-      <Sphere ref={halo} args={[4.9, 32, 32]}>
+      {/* outer atmospheric halo — deep ember */}
+      <Sphere ref={halo} args={[5.1, 32, 32]}>
         <meshBasicMaterial
-          color="#2b7a78"
+          color="#ff7a1a"
           transparent
-          opacity={0.15}
+          opacity={0.16}
           side={THREE.BackSide}
           toneMapped={false}
           blending={THREE.AdditiveBlending}

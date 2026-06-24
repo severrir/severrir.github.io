@@ -8,3 +8,10 @@ dist
 .vscode
 
 preview.log
+
+# local dev/test scratch (not part of the site)
+_shots.mjs
+_soak.mjs
+preview_soak.log
+shots/
+shots2/

@@ -10,10 +10,10 @@ export default function Starfield({ count = 1800 }) {
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const palette = [
-      new THREE.Color("#feffff"),
-      new THREE.Color("#def2f1"),
-      new THREE.Color("#3aafa9"),
-      new THREE.Color("#2b7a78"),
+      new THREE.Color("#ffffff"),
+      new THREE.Color("#cfe0ff"),
+      new THREE.Color("#6fe3ff"),
+      new THREE.Color("#ffd9a0"),
     ];
 
     for (let i = 0; i < count; i++) {

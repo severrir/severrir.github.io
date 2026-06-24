@@ -1,0 +1,222 @@
+/* ── Beat scaffold ─────────────────────────────────────────────────────── */
+.beat {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none; /* let scene clicks/drags through; children opt back in */
+}
+
+/* ── Beat 1 — Name ─────────────────────────────────────────────────────── */
+.beat--name {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 clamp(18px, 5vw, 48px);
+}
+
+.beat-name__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 860px;
+}
+
+.beat-name__inner::before {
+  content: "";
+  position: absolute;
+  inset: -80px -120px;
+  z-index: -1;
+  background: radial-gradient(
+    60% 64% at 50% 46%,
+    rgba(var(--void-rgb), 0.6) 0%,
+    rgba(var(--void-rgb), 0.22) 50%,
+    transparent 74%
+  );
+  pointer-events: none;
+}
+
+.beat-name__eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: clamp(11px, 1.3vw, 13px);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-left: 0.4em;
+}
+
+.beat-name__title {
+  display: flex;
+  margin: clamp(16px, 3vh, 26px) 0 clamp(14px, 2.4vh, 22px);
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(56px, 15vw, 178px);
+  line-height: 0.92;
+  letter-spacing: 0.14em;
+  padding-left: 0.14em;
+  color: var(--space-bright);
+}
+
+.beat-name__char {
+  display: inline-block;
+  background: linear-gradient(180deg, #ffffff 0%, #cfd6e6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 70px rgba(var(--accent-rgb), 0.35);
+  will-change: transform, opacity, filter;
+}
+
+.beat-name__char:empty {
+  width: 0.28em; /* keep spacing if a space ever appears */
+}
+
+.beat-name__tagline {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: clamp(11px, 1.4vw, 14px);
+  letter-spacing: 0.18em;
+  color: var(--space-muted);
+  margin: 0;
+}
+
+/* ── Beat 2 — What I do ────────────────────────────────────────────────── */
+.beat--what {
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(110px, 16vh, 200px) clamp(18px, 6vw, 96px) 64px;
+}
+
+.beat-what__inner {
+  position: relative;
+  max-width: 540px;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.beat-what__inner::before {
+  content: "";
+  position: absolute;
+  inset: -48px -64px;
+  z-index: -1;
+  background: radial-gradient(
+    80% 80% at 30% 50%,
+    rgba(var(--void-rgb), 0.66) 0%,
+    rgba(var(--void-rgb), 0.2) 55%,
+    transparent 80%
+  );
+  pointer-events: none;
+}
+
+.beat-what__title {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(28px, 4.6vw, 48px);
+  line-height: 1.1;
+  margin: 16px 0 20px;
+  color: var(--space-bright);
+}
+
+.beat-what__bio {
+  font-size: clamp(15px, 1.5vw, 17px);
+  line-height: 1.8;
+  color: #c3c9d8;
+  margin: 0 0 8px;
+}
+
+.beat--what .scroll-cue {
+  align-self: flex-start;
+  margin-top: 30px;
+}
+
+/* ── Beat 3 — System ───────────────────────────────────────────────────── */
+.beat--system {
+  align-items: center;
+  justify-content: flex-start;
+  padding: clamp(96px, 13vh, 150px) clamp(18px, 5vw, 48px) 64px;
+}
+
+.beat-system__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.beat-system__hint {
+  font-size: 14px;
+  color: var(--space-muted);
+  margin: 0;
+}
+
+/* ── Scroll cue (shared) ───────────────────────────────────────────────── */
+.scroll-cue {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  pointer-events: auto;
+  color: var(--space-muted);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  transition: color 0.25s ease;
+}
+
+/* center the cue along the bottom of a beat unless a beat overrides it */
+.beat > .scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+}
+
+.scroll-cue:hover {
+  color: var(--accent-glow);
+}
+
+.scroll-cue__chevron {
+  width: 12px;
+  height: 12px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  animation: scrollCueBob 1.8s ease-in-out infinite;
+}
+
+@keyframes scrollCueBob {
+  0%,
+  100% {
+    transform: rotate(45deg) translate(0, 0);
+  }
+  50% {
+    transform: rotate(45deg) translate(3px, 3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue__chevron {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .beat--what {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .beat-name__title {
+    letter-spacing: 0.08em;
+    padding-left: 0.08em;
+  }
+}
