@@ -1,0 +1,201 @@
+/* ── Booking ───────────────────────────────────────────────────────────── */
+.booking {
+  pointer-events: auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding-top: clamp(110px, 16vh, 170px) !important;
+}
+
+.booking__inner {
+  position: relative;
+  width: min(520px, 100%);
+  padding: clamp(30px, 5vw, 44px);
+  border: 1px solid var(--space-border);
+  border-radius: 24px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(var(--accent-rgb), 0.07), transparent 55%),
+    rgba(13, 15, 24, 0.78);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+
+.booking__title {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(28px, 4vw, 38px);
+  margin: 14px 0 12px;
+  color: var(--space-bright);
+}
+
+.booking__lede {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #c3c9d8;
+  margin: 0 0 26px;
+}
+
+.booking__form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field__label {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--space-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field__req {
+  color: var(--accent);
+}
+
+.field__opt {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--space-muted);
+  border: 1px solid var(--space-border);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.field__input {
+  width: 100%;
+  font-family: "Manrope", sans-serif;
+  font-size: 15px;
+  color: var(--space-text);
+  background: rgba(5, 6, 10, 0.6);
+  border: 1px solid var(--space-border);
+  border-radius: 12px;
+  padding: 13px 15px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.field__input::placeholder {
+  color: #6b7184;
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: rgba(var(--accent-rgb), 0.6);
+  background: rgba(5, 6, 10, 0.85);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+}
+
+.field__input.is-invalid {
+  border-color: rgba(232, 69, 60, 0.7);
+}
+.field__input.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(232, 69, 60, 0.15);
+}
+
+.field__error {
+  font-size: 12.5px;
+  color: #ff9a8f;
+}
+
+.booking__form-error {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #ff9a8f;
+  background: rgba(232, 69, 60, 0.1);
+  border: 1px solid rgba(232, 69, 60, 0.3);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 0;
+}
+
+.booking__submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+.booking__submit:disabled {
+  opacity: 0.7;
+  cursor: progress;
+  transform: none;
+}
+
+.booking__fineprint {
+  text-align: center;
+  font-size: 13px;
+  color: var(--space-muted);
+  margin: 4px 0 0;
+}
+.booking__fineprint strong {
+  color: var(--accent-glow);
+  font-weight: 600;
+}
+
+/* ── Success state ─────────────────────────────────────────────────────── */
+.booking__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  padding: 14px 0 6px;
+}
+
+.booking__success-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  color: #07121a;
+  background: radial-gradient(circle at 35% 35%, var(--accent-glow), var(--accent));
+  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.6);
+  animation: successPop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes successPop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.booking__success-title {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 30px;
+  margin: 4px 0 0;
+  color: var(--space-bright);
+}
+
+.booking__success-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #c3c9d8;
+  margin: 0;
+  max-width: 38ch;
+}
+
+.booking__success-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking__success-mark {
+    animation: none;
+  }
+}

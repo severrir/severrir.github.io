@@ -1,0 +1,237 @@
+/* ── Services hero — the interactive constellation overlay ─────────────── */
+.svc-hero {
+  position: relative;
+  min-height: 100vh;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  pointer-events: none; /* clicks fall through to the 3D planets behind */
+  padding-top: clamp(96px, 14vh, 150px) !important;
+}
+
+.svc-hero__head {
+  max-width: 540px;
+  text-align: left;
+  pointer-events: none;
+}
+
+.svc-hero__head .page-title {
+  max-width: 14ch;
+}
+
+.svc-hero__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 22px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--space-muted);
+}
+
+.svc-hero__hint-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.8);
+  animation: svcHintPulse 2s ease-in-out infinite;
+}
+
+@keyframes svcHintPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Detail panel for a selected world — anchored to the viewport (not the hero)
+   so it's always visible, whether the selection came from a planet up top or a
+   card further down the page. */
+.svc-detail {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: clamp(24px, 5vh, 48px);
+  margin-inline: auto;
+  width: min(460px, calc(100vw - 32px));
+  z-index: 30;
+  pointer-events: auto;
+  padding: 22px 24px 20px;
+  border: 1px solid var(--space-border);
+  border-radius: 18px;
+  background: rgba(13, 15, 24, 0.9);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px -10px var(--accent, #6fe3ff);
+}
+
+.svc-detail__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--space-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--space-muted);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.svc-detail__close:hover {
+  color: var(--space-text);
+  border-color: rgba(var(--accent-rgb), 0.5);
+}
+
+.svc-detail__sys {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.svc-detail__title {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(20px, 2.6vw, 26px);
+  margin: 8px 0 2px;
+  color: var(--space-bright);
+}
+
+.svc-detail__blurb {
+  font-size: 13px;
+  color: var(--accent-glow);
+  margin: 0 0 10px;
+}
+
+.svc-detail__desc {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: #c3c9d8;
+  margin: 0 0 14px;
+}
+
+.svc-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 16px;
+}
+
+.svc-detail__nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--space-border);
+  padding-top: 14px;
+}
+
+/* ── Full discipline grid ──────────────────────────────────────────────── */
+.svc-grid-section {
+  pointer-events: auto;
+}
+
+.svc-grid {
+  width: min(1080px, 100%);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.svc-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  padding: 26px 24px;
+  border: 1px solid var(--space-border);
+  border-radius: 18px;
+  background: rgba(13, 15, 24, 0.55);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease,
+    background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.svc-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent, #6fe3ff), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.svc-card:hover,
+.svc-card.is-active {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--accent, #6fe3ff) 50%, transparent);
+  background: rgba(19, 21, 31, 0.72);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4), 0 0 30px -14px var(--accent, #6fe3ff);
+}
+
+.svc-card:hover::before,
+.svc-card.is-active::before {
+  opacity: 0.8;
+}
+
+.svc-card__dot {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent, #6fe3ff);
+  box-shadow: 0 0 14px var(--accent, #6fe3ff);
+}
+
+.svc-card__num {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--space-muted);
+}
+
+.svc-card__title {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 19px;
+  margin: 0;
+  color: var(--space-bright);
+}
+
+.svc-card__desc {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #b9c0d2;
+  margin: 0;
+}
+
+.svc-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .svc-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .svc-grid {
+    grid-template-columns: 1fr;
+  }
+  .svc-hero__head {
+    max-width: 100%;
+  }
+}

@@ -1,0 +1,308 @@
+/* ── Pricing hero ──────────────────────────────────────────────────────── */
+.pricing-hero {
+  pointer-events: auto;
+  text-align: center;
+  align-items: center;
+  padding-top: clamp(120px, 18vh, 180px) !important;
+  padding-bottom: clamp(28px, 4vh, 44px) !important;
+}
+.pricing-hero .page-title {
+  margin-left: auto;
+  margin-right: auto;
+}
+.pricing-hero .page-lede {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Tier cards (4-tier grid) ──────────────────────────────────────────── */
+.tiers {
+  pointer-events: auto;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr);
+  width: min(1180px, 100%);
+  align-items: stretch;
+  gap: 18px;
+  padding-top: clamp(12px, 2vh, 24px) !important;
+}
+
+.tier {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 24px 26px;
+  border: 1px solid var(--space-border);
+  border-radius: 22px;
+  background: rgba(13, 15, 24, 0.6);
+  backdrop-filter: blur(10px);
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.32s ease,
+    box-shadow 0.32s ease;
+}
+
+.tier:hover {
+  transform: translateY(-5px);
+  border-color: rgba(var(--accent-rgb), 0.4);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* The featured tier ascends — slightly larger, warm-lit, like the closest orbit
+   to the sun. */
+.tier.is-featured {
+  border-color: rgba(var(--warm-rgb), 0.45);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(var(--warm-rgb), 0.12), transparent 55%),
+    rgba(19, 21, 31, 0.72);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5), 0 0 40px -16px rgba(var(--warm-rgb), 0.7);
+}
+.tier.is-featured:hover {
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 50px -14px rgba(var(--warm-rgb), 0.8);
+}
+
+@media (min-width: 1100px) {
+  .tier.is-featured {
+    transform: translateY(-12px);
+  }
+  .tier.is-featured:hover {
+    transform: translateY(-17px);
+  }
+}
+
+.tier__badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #2a1402;
+  background: linear-gradient(135deg, var(--warm-a), var(--warm-b));
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(var(--warm-rgb), 0.4);
+}
+
+.tier__eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.tier__name {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  margin: 8px 0 14px;
+  color: var(--space-bright);
+}
+
+.tier__price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--space-border);
+}
+
+.tier__price-num {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(26px, 2.4vw, 32px);
+  line-height: 1.05;
+  color: var(--space-bright);
+  white-space: nowrap;
+}
+.tier.is-featured .tier__price-num {
+  background: linear-gradient(135deg, #ffe6a8, var(--warm-a));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tier__price-note {
+  font-size: 13px;
+  color: var(--space-muted);
+}
+
+.tier__summary {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #c3c9d8;
+  margin: 0 0 18px;
+}
+
+.tier__features {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  flex: 1;
+}
+
+.tier__features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #d2d7e3;
+}
+
+.tier__check {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--accent-glow), var(--accent));
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.5);
+  position: relative;
+}
+.tier.is-featured .tier__check {
+  background: radial-gradient(circle at 35% 35%, #fff2d6, var(--warm-a));
+  box-shadow: 0 0 10px rgba(var(--warm-rgb), 0.5);
+}
+.tier__check::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 3px;
+  width: 4px;
+  height: 7px;
+  border-right: 2px solid #07121a;
+  border-bottom: 2px solid #07121a;
+  transform: rotate(42deg);
+}
+
+.tier__cta {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── FAQ ───────────────────────────────────────────────────────────────── */
+.faq {
+  pointer-events: auto;
+  align-items: center;
+}
+
+.faq__head {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.faq__title {
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(26px, 3.6vw, 38px);
+  margin: 12px 0 0;
+  color: var(--space-bright);
+}
+
+.faq__list {
+  width: min(760px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.faq-item {
+  border: 1px solid var(--space-border);
+  border-radius: 16px;
+  background: rgba(13, 15, 24, 0.55);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  transition: border-color 0.28s ease, background 0.28s ease;
+}
+
+.faq-item.is-open {
+  border-color: rgba(var(--accent-rgb), 0.35);
+  background: rgba(19, 21, 31, 0.7);
+}
+
+.faq-item__q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  padding: 20px 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: "Sora", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(15px, 1.7vw, 17px);
+  color: var(--space-text);
+  transition: color 0.25s ease;
+}
+.faq-item__q:hover {
+  color: var(--accent-glow);
+}
+
+.faq-item__chevron {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  color: var(--space-muted);
+}
+.faq-item__chevron.is-open {
+  transform: rotate(-135deg);
+  color: var(--accent);
+}
+
+.faq-item__a-wrap {
+  overflow: hidden;
+}
+
+.faq-item__a {
+  padding: 0 22px 22px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.75;
+  color: #c3c9d8;
+}
+
+.faq-item__list {
+  padding: 0 22px 22px 42px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.faq-item__list li {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #c3c9d8;
+}
+.faq-item__list li::marker {
+  color: var(--accent);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* 4 → 2 → 1 columns */
+@media (max-width: 1099px) {
+  .tiers {
+    grid-template-columns: repeat(2, 1fr);
+    width: min(680px, 100%);
+  }
+}
+
+@media (max-width: 560px) {
+  .tiers {
+    grid-template-columns: 1fr;
+    width: min(380px, 100%);
+  }
+}

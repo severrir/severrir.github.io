@@ -9,19 +9,84 @@
 }
 
 /* ── Beat 1 — Name ─────────────────────────────────────────────────────── */
+/* Wordmark sits just left of centre to leave room for the hero planet on the
+   right; on narrow screens it recenters and the planet is hidden (the full
+   background system already supplies planets there). */
+/* Two-column hero row: wordmark block on the left (so the title reads just left
+   of centre), interactive planet on the right. The row as a whole is centred in
+   the viewport. */
 .beat--name {
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 0 clamp(18px, 5vw, 48px);
+  text-align: left;
+  gap: clamp(16px, 3vw, 52px);
+  padding: 0 clamp(24px, 6vw, 88px);
 }
 
 .beat-name__inner {
   position: relative;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  flex: 0 1 auto;
+  max-width: 640px;
+}
+
+/* Title is large but must clear the planet — cap it tighter than the original
+   centred hero so the full wordmark always fits the left column. */
+.beat--name .beat-name__title {
+  font-size: clamp(40px, 6.8vw, 94px);
+  letter-spacing: 0.05em;
+  padding-left: 0.05em;
+  white-space: nowrap;
+}
+
+/* Hero planet — in-flow as the right column, vertically centred by the row.
+   Carries a scroll-parallax transform (framer), so no extra positioning here. */
+.beat-name__planet {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
   align-items: center;
-  max-width: 860px;
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.hero-planet {
+  position: relative;
+  width: clamp(190px, 21vw, 290px);
+  aspect-ratio: 1 / 1;
+  cursor: pointer;
+}
+
+.hero-planet__halo {
+  position: absolute;
+  inset: -8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(var(--accent-rgb), 0.22) 0%,
+    rgba(var(--accent-rgb), 0.08) 40%,
+    transparent 68%
+  );
+  filter: blur(6px);
+  opacity: 0.8;
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.hero-planet__halo.is-hover {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.beat-name__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: clamp(22px, 3.4vh, 34px);
+  pointer-events: auto;
 }
 
 .beat-name__inner::before {
@@ -241,6 +306,33 @@
 @media (prefers-reduced-motion: reduce) {
   .scroll-cue__chevron {
     animation: none;
+  }
+}
+
+/* Recenter the hero and drop the dedicated planet on narrower screens — the
+   full background system already provides planets there, and a side planet
+   would crowd the wordmark. */
+@media (max-width: 900px) {
+  .beat--name {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0;
+    padding: 0 clamp(18px, 5vw, 48px);
+  }
+  .beat-name__inner {
+    align-items: center;
+    max-width: 680px;
+  }
+  .beat--name .beat-name__title {
+    justify-content: center;
+  }
+  .beat-name__cta {
+    justify-content: center;
+  }
+  .beat-name__planet {
+    display: none;
   }
 }
 

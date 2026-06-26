@@ -4,7 +4,7 @@ import { links } from "@/data/projects.js";
 import { GithubIcon, YoutubeIcon } from "@/ui/icons.jsx";
 import "@/styles/sections.css";
 
-export default function ContactSection() {
+export default function ContactSection({ onBook }) {
   const [copied, setCopied] = useState(false);
   const copyDiscord = () => {
     navigator.clipboard?.writeText(links.discord).then(
@@ -39,7 +39,10 @@ export default function ContactSection() {
         </p>
 
         <div className="contact-section__cta">
-          <a className="btn btn-primary" href={links.github} target="_blank" rel="noreferrer">
+          <button className="btn btn-primary" onClick={onBook} type="button">
+            Book a Consultation
+          </button>
+          <a className="btn btn-ghost" href={links.github} target="_blank" rel="noreferrer">
             <GithubIcon /> GitHub
           </a>
           <a className="btn btn-ghost" href={links.youtube} target="_blank" rel="noreferrer">

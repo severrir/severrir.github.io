@@ -1,356 +1,75 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import Lenis from "lenis";
-import SceneBoundary from "@/scene/SceneBoundary.jsx";
-import BoxLoader from "@/components/ui/box-loader.jsx";
-import Nav from "@/ui/Nav.jsx";
-import NameBeat from "@/ui/beats/NameBeat.jsx";
-import WhatIDoBeat from "@/ui/beats/WhatIDoBeat.jsx";
-import SystemBeat from "@/ui/beats/SystemBeat.jsx";
-import ProjectCard from "@/ui/ProjectCard.jsx";
-import AboutSection from "@/ui/AboutSection.jsx";
-import ContactSection from "@/ui/ContactSection.jsx";
-import OnboardingHint from "@/ui/OnboardingHint.jsx";
-import HudFrame from "@/ui/HudFrame.jsx";
-import { projects } from "@/data/projects.js";
-import { INTERACTIVE_AT, stageProgress } from "@/scene/scrollStage.js";
-import { bindPointer } from "@/scene/sceneEnv.js";
+import { lazy, Suspense, useEffect, useRef } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import HomePage from "@/pages/HomePage.jsx";
 import { audio } from "@/audio/audioEngine.js";
 
-// Lazy-load the heavy Three.js scene so the hero text + loader paint from a tiny
-// initial chunk; the ~1.2 MB 3D bundle streams in behind the loader.
-const Scene = lazy(() => import("@/scene/Scene.jsx"));
+// Subpages are lazy: the homepage's heavy 3D scene chunk stays the priority on
+// first paint, and each subpage's own scene streams in only when visited.
+const ServicesPage = lazy(() => import("@/pages/ServicesPage.jsx"));
+const PricingPage = lazy(() => import("@/pages/PricingPage.jsx"));
+const BookingPage = lazy(() => import("@/pages/BookingPage.jsx"));
 
-// Deep-link: read ?project=<id> once on load so a shared link opens that card.
-function initialDeepLink() {
-  if (typeof window === "undefined") return null;
-  const id = new URLSearchParams(window.location.search).get("project");
-  if (!id) return null;
-  const i = projects.findIndex((p) => p.id === id);
-  return i >= 0 ? i : null;
+// Cinematic page transition: a through-black opacity crossfade with mode="wait",
+// so the outgoing page (and its WebGL context) fully unmounts before the next
+// one mounts — no two heavy scenes alive at once. We deliberately animate
+// OPACITY only, never transform/filter: a transformed ancestor would become the
+// containing block for the homepage's position:fixed scene canvas and break it.
+const PAGE_VARIANTS = {
+  initial: { opacity: 0 },
+  enter: { opacity: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+  exit: { opacity: 0, transition: { duration: 0.32, ease: [0.4, 0, 1, 1] } },
+};
+
+function Page({ children }) {
+  return (
+    <motion.div
+      className="page-frame"
+      variants={PAGE_VARIANTS}
+      initial="initial"
+      animate="enter"
+      exit="exit"
+    >
+      {children}
+    </motion.div>
+  );
 }
 
-const MIN_LOADER_MS = 950;
-const HARD_CAP_MS = 1700; // absolute ceiling: reveal even if the scene is still compiling
-const FADE_MS = 480;
-const CARD_EXIT_MS = 320;
-const HINT_INTENSIFY_MS = 5500;
-
 export default function App() {
-  const [sceneReady, setSceneReady] = useState(false);
-  const [minElapsed, setMinElapsed] = useState(false);
-  const [hardCapped, setHardCapped] = useState(false);
-  const [loaderState, setLoaderState] = useState("show"); // show | leaving | gone
-  const [entered, setEntered] = useState(false); // Enter button pressed
+  const location = useLocation();
+  const firstRender = useRef(true);
 
-  const [activeIndex, setActiveIndex] = useState(null);
-  const [cardPhase, setCardPhase] = useState("in"); // in | out
-  const [cardOrigin, setCardOrigin] = useState(null);
-  const [interactive, setInteractive] = useState(false); // true once Beat 3 is reached
-  const [hintActive, setHintActive] = useState(false);
-  const [hintIntense, setHintIntense] = useState(false);
-
-  const lenisRef = useRef(null);
-  const exitTimer = useRef();
-  const hintTimer = useRef();
-  const hintEngaged = useRef(false);
-  const lastScrollSnd = useRef(0); // throttle for the scroll whoosh
-  const letterboxRetracted = useRef(false); // bars recede on the first scroll
-
-  // Pointer / device-tilt parallax + idle tracking for the 3D scene.
-  useEffect(() => bindPointer(), []);
-
-  // Always open at the top — never let the browser restore a mid-page scroll on
-  // reload, which would skip the loader/fly-in and land mid-experience.
+  // Soft warp whoosh on every client-side navigation (after the first paint).
+  // No-op until audio is unlocked, so it never violates autoplay policy.
   useEffect(() => {
-    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    audio.whoosh(0.085);
+    // Reset scroll to the top of the incoming page.
     window.scrollTo(0, 0);
-  }, []);
-
-  const deepLink = useRef(initialDeepLink());
-  const [bootCinematic, setBootCinematic] = useState(false);
-
-  const ready = (sceneReady && minElapsed) || hardCapped;
-  const revealed = loaderState !== "show";
-  const overview = activeIndex === null;
-
-  // Cinematic letterbox bars frame the hero the instant the scene reveals, then
-  // glide away on the visitor's first scroll (see the Lenis handler below) —
-  // they're part of the entrance, not a timed overlay that snaps off on its own.
-  useEffect(() => {
-    if (!revealed) return;
-    setBootCinematic(true);
-  }, [revealed]);
-
-  // Fire the entry swish the moment the loading screen is fully gone — i.e. when
-  // the camera fly-in becomes visible. Auto-plays if audio is already unlocked;
-  // otherwise the first interaction within the window triggers it.
-  useEffect(() => {
-    if (loaderState !== "gone") return;
-    audio.armIntro(150, 6000);
-    const swish = setTimeout(() => audio.intro(), 200);
-    return () => clearTimeout(swish);
-  }, [loaderState]);
-
-  // ── Smooth scroll (Lenis) ───────────────────────────────────────────────
-  useEffect(() => {
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const lenis = new Lenis({
-      duration: 1.15,
-      smoothWheel: !reduce,
-      syncTouch: false,
-      wheelMultiplier: 1,
-    });
-    lenisRef.current = lenis;
-
-    let raf;
-    const loop = (t) => {
-      lenis.raf(t);
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-
-    // Per-scroll work: flip interactivity at the Beat 3 boundary (state only
-    // changes on an actual crossing), retract the cinematic letterbox on the
-    // first real scroll, and emit a soft velocity-mapped scroll whoosh.
-    const onScroll = () => {
-      const next = stageProgress() >= INTERACTIVE_AT;
-      setInteractive((cur) => (cur !== next ? next : cur));
-
-      if (!letterboxRetracted.current && lenis.scroll > 6) {
-        letterboxRetracted.current = true;
-        setBootCinematic(false);
-      }
-
-      const v = Math.abs(lenis.velocity || 0);
-      if (v > 1.5) {
-        const now = performance.now();
-        if (now - lastScrollSnd.current > 110) {
-          lastScrollSnd.current = now;
-          audio.scroll(Math.min(v / 42, 1));
-        }
-      }
-    };
-    lenis.on("scroll", onScroll);
-    onScroll();
-
-    return () => {
-      cancelAnimationFrame(raf);
-      lenis.destroy();
-      lenisRef.current = null;
-    };
-  }, []);
-
-  const scrollTo = useCallback((target) => {
-    const lenis = lenisRef.current;
-    if (!lenis) return;
-    if (typeof target === "number") lenis.scrollTo(target);
-    else {
-      const el = typeof target === "string" ? document.getElementById(target) : target;
-      if (el) lenis.scrollTo(el);
-    }
-  }, []);
-
-  // ── Loader timing ───────────────────────────────────────────────────────
-  useEffect(() => {
-    const t = setTimeout(() => setMinElapsed(true), MIN_LOADER_MS);
-    return () => clearTimeout(t);
-  }, []);
-  useEffect(() => {
-    const t = setTimeout(() => setHardCapped(true), HARD_CAP_MS);
-    return () => clearTimeout(t);
-  }, []);
-  // Hold on the loading screen until the visitor presses Enter — that click is
-  // the gesture that unlocks audio, so the entry swish can play with the fly-in.
-  useEffect(() => {
-    if (ready && entered) setLoaderState((s) => (s === "show" ? "leaving" : s));
-  }, [ready, entered]);
-  useEffect(() => {
-    if (loaderState === "leaving") {
-      const t = setTimeout(() => setLoaderState("gone"), FADE_MS);
-      return () => clearTimeout(t);
-    }
-  }, [loaderState]);
-
-  const handleEnter = useCallback(() => {
-    if (typeof localStorage === "undefined" || localStorage.getItem("severrir-sound") !== "off") {
-      audio.setEnabled(true); // unlock audio via this gesture
-    }
-    setEntered(true);
-  }, []);
-
-  // ── Onboarding hint (Beat 3 only) ───────────────────────────────────────
-  const dismissHint = useCallback(() => {
-    clearTimeout(hintTimer.current);
-    hintEngaged.current = true;
-    setHintActive(false);
-    setHintIntense(false);
-  }, []);
-
-  useEffect(() => {
-    if (revealed && interactive && overview && !hintEngaged.current) {
-      setHintActive(true);
-      hintTimer.current = setTimeout(() => setHintIntense(true), HINT_INTENSIFY_MS);
-      return () => clearTimeout(hintTimer.current);
-    }
-    setHintActive(false);
-    setHintIntense(false);
-  }, [revealed, interactive, overview]);
-
-  // ── Project selection ───────────────────────────────────────────────────
-  const selectProject = useCallback(
-    (i, origin = null) => {
-      dismissHint();
-      audio.select();
-      clearTimeout(exitTimer.current);
-      setCardOrigin(origin);
-      setCardPhase("in");
-      setActiveIndex(i);
-    },
-    [dismissHint]
-  );
-
-  const closeProject = useCallback(() => {
-    audio.tick();
-    setCardPhase("out");
-    clearTimeout(exitTimer.current);
-    exitTimer.current = setTimeout(() => setActiveIndex(null), CARD_EXIT_MS);
-  }, []);
-
-  // Lock scroll while a card is open so Beat 3 stays put during exploration.
-  useEffect(() => {
-    const lenis = lenisRef.current;
-    if (!lenis) return;
-    if (activeIndex !== null) lenis.stop();
-    else lenis.start();
-  }, [activeIndex]);
-
-  // Keep the URL in sync with the open card so any project is directly shareable.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const url = new URL(window.location.href);
-    if (activeIndex !== null) url.searchParams.set("project", projects[activeIndex].id);
-    else url.searchParams.delete("project");
-    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
-  }, [activeIndex]);
-
-  // Open the deep-linked project once the scene is revealed: jump to the
-  // interactive overview first so closing the card returns there cleanly.
-  useEffect(() => {
-    if (!revealed || deepLink.current == null) return;
-    const i = deepLink.current;
-    deepLink.current = null;
-    const vh = window.innerHeight || 1;
-    // Jump straight to the interactive overview (no animated scroll, which the
-    // card's scroll-lock would interrupt and leave us stranded on the hero),
-    // then open the card so closing it returns to the system.
-    lenisRef.current?.scrollTo(Math.round(vh * 1.95), { immediate: true });
-    const t = setTimeout(() => selectProject(i), 400);
-    return () => clearTimeout(t);
-  }, [revealed, selectProject]);
-
-  const goHome = useCallback(() => {
-    setCardPhase("out");
-    clearTimeout(exitTimer.current);
-    exitTimer.current = setTimeout(() => setActiveIndex(null), CARD_EXIT_MS);
-    requestAnimationFrame(() => {
-      lenisRef.current?.start();
-      scrollTo(0);
-    });
-  }, [scrollTo]);
-
-  const jumpTo = useCallback(
-    (id) => {
-      audio.whoosh();
-      setCardPhase("out");
-      clearTimeout(exitTimer.current);
-      exitTimer.current = setTimeout(() => setActiveIndex(null), CARD_EXIT_MS);
-      requestAnimationFrame(() => {
-        lenisRef.current?.start();
-        scrollTo(id);
-      });
-    },
-    [scrollTo]
-  );
-
-  const step = useCallback((dir) => {
-    audio.click();
-    setCardOrigin(null);
-    setCardPhase("in");
-    setActiveIndex((i) => (i === null ? 0 : (i + dir + projects.length) % projects.length));
-  }, []);
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "Escape" && activeIndex !== null) closeProject();
-      if (activeIndex !== null) {
-        if (e.key === "ArrowRight") step(1);
-        if (e.key === "ArrowLeft") step(-1);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [activeIndex, closeProject, step]);
+  }, [location.pathname]);
 
   return (
     <>
-      <SceneBoundary>
-        <Suspense fallback={null}>
-          <Scene
-            activeIndex={activeIndex}
-            onSelect={selectProject}
-            onReady={() => setSceneReady(true)}
-            onInteract={dismissHint}
-            interactive={interactive}
-            playIntro={revealed}
-          />
-        </Suspense>
-      </SceneBoundary>
+      {/* Hyperspace streak that flashes across during a route change. Fixed and
+          standalone — it never wraps page content, so it can't affect layout. */}
+      <div className="warp-veil" key={location.pathname} aria-hidden="true" />
 
-      <div className="atmosphere" aria-hidden="true" />
-      <div className="grain" aria-hidden="true" />
-
-      <HudFrame
-        letterbox={bootCinematic}
-        statusRight={activeIndex !== null ? projects[activeIndex].id.toUpperCase() : "OVERVIEW"}
-      />
-
-      <div className={`ui-layer app-reveal ${revealed ? "is-revealed" : ""}`}>
-        <span id="top-anchor" aria-hidden="true" />
-        <Nav onHome={goHome} onJump={jumpTo} />
-
-        <NameBeat visible={revealed} onNext={() => jumpTo("beat-what")} />
-        <WhatIDoBeat onNext={() => jumpTo("beat-system")} />
-        <SystemBeat onNext={() => jumpTo("about-section")} />
-
-        <OnboardingHint active={hintActive && overview && interactive} intense={hintIntense} />
-
-        <AboutSection />
-        <ContactSection />
-      </div>
-
-      {/* Rendered OUTSIDE .app-reveal: that wrapper has a transform, which would
-          make it the containing block for the card's position:fixed and pin the
-          card to the (tall) document rather than the viewport — pushing the
-          mobile bottom-sheet off-screen. As a top-level sibling it is correctly
-          viewport-fixed, exactly like the loader below. */}
-      {activeIndex !== null && (
-        <ProjectCard
-          project={projects[activeIndex]}
-          index={activeIndex}
-          total={projects.length}
-          origin={cardOrigin}
-          phase={cardPhase}
-          onClose={closeProject}
-          onNext={() => step(1)}
-          onPrev={() => step(-1)}
-        />
-      )}
-
-      {loaderState !== "gone" && (
-        <div className={`loader-fade ${loaderState === "leaving" ? "is-leaving" : ""}`}>
-          <BoxLoader ready={ready && !entered} onEnter={handleEnter} />
-        </div>
-      )}
+      <AnimatePresence mode="wait" initial={false}>
+        <Page key={location.pathname}>
+          <Suspense fallback={<div className="route-fallback" aria-hidden="true" />}>
+            <Routes location={location}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/booking" element={<BookingPage />} />
+              <Route path="*" element={<HomePage />} />
+            </Routes>
+          </Suspense>
+        </Page>
+      </AnimatePresence>
     </>
   );
 }
