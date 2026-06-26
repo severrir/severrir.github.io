@@ -13,7 +13,7 @@ const EASE = [0.22, 1, 0.36, 1];
 
 export default function BookingPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", discord: "", email: "" });
+  const [form, setForm] = useState({ name: "", discord: "", email: "", commission: "" });
   const [status, setStatus] = useState("idle"); // idle | submitting | success | error
   const [error, setError] = useState("");
   const [touched, setTouched] = useState(false);
@@ -48,7 +48,7 @@ export default function BookingPage() {
 
   const reset = () => {
     audio.click();
-    setForm({ name: "", discord: "", email: "" });
+    setForm({ name: "", discord: "", email: "", commission: "" });
     setTouched(false);
     setStatus("idle");
     setError("");
@@ -169,6 +169,19 @@ export default function BookingPage() {
                     {touched && !emailOk && (
                       <span className="field__error">That email doesn't look right.</span>
                     )}
+                  </label>
+
+                  <label className="field">
+                    <span className="field__label">
+                      What do you need? <span className="field__opt">optional</span>
+                    </span>
+                    <textarea
+                      className="field__input field__textarea"
+                      value={form.commission}
+                      onChange={set("commission")}
+                      placeholder="Describe your project, what you need built, timeline, budget range, or any specific requirements..."
+                      rows="5"
+                    />
                   </label>
 
                   {status === "error" && (
