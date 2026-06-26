@@ -38,6 +38,8 @@ html {
   scroll-behavior: smooth;
   scrollbar-width: none; /* Firefox — Lenis drives scroll, hide the native bar */
   -ms-overflow-style: none;
+  /* Prevent iOS zoom on input focus */
+  font-size: 16px;
 }
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
