@@ -55,11 +55,20 @@
 
 .hero-planet {
   position: relative;
-  width: 320px;
-  height: 320px;
+  width: 400px;
+  height: 400px;
   cursor: pointer;
   /* entrance fade-in without scale transform (which can cause sizing race conditions) */
   animation: heroPlanetIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Keep the hero planet from crowding the wordmark or nav on mid-size screens —
+   it scales down as a fixed step, not a continuous calc (determinism preserved). */
+@media (max-width: 1200px) {
+  .hero-planet {
+    width: 340px;
+    height: 340px;
+  }
 }
 
 @keyframes heroPlanetIn {

@@ -402,6 +402,38 @@ body {
   100% { transform: scale(320); }
 }
 
+/* The whole living site — the 3D scene, the hero text/buttons, the atmosphere
+   and grain — is physically pulled toward the singularity's core (50% / 46%),
+   spiralling inward and crushing to a point as the core swallows the frame.
+   Each layer is transformed directly (never a shared ancestor) so the fixed
+   scene canvas keeps its own containing block. Restored under full black cover
+   once the core fills the screen, so the snap-back is never seen. */
+body.is-collapsing .scene-canvas,
+body.is-collapsing .app-reveal,
+body.is-collapsing .atmosphere,
+body.is-collapsing .grain {
+  transform-origin: 50% 46%;
+  animation: collapseSuck 2s cubic-bezier(0.6, 0, 0.9, 0.35) forwards;
+  pointer-events: none !important;
+}
+
+/* the scene gets a touch more spin + blur — it's the mass closest to the core */
+body.is-collapsing .scene-canvas {
+  animation-name: collapseSuckScene;
+}
+
+@keyframes collapseSuck {
+  0% { transform: scale(1) rotate(0deg); opacity: 1; filter: blur(0); }
+  60% { opacity: 1; }
+  100% { transform: scale(0.012) rotate(390deg); opacity: 0; filter: blur(4px); }
+}
+
+@keyframes collapseSuckScene {
+  0% { transform: scale(1) rotate(0deg); opacity: 1; filter: blur(0); }
+  55% { opacity: 1; }
+  100% { transform: scale(0.008) rotate(540deg); opacity: 0; filter: blur(7px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -420,6 +452,13 @@ body {
   .singularity__ring,
   .singularity__core {
     display: none;
+  }
+  /* no page-crush for reduced-motion — just the calm fade above */
+  body.is-collapsing .scene-canvas,
+  body.is-collapsing .app-reveal,
+  body.is-collapsing .atmosphere,
+  body.is-collapsing .grain {
+    animation: none !important;
   }
 }
 

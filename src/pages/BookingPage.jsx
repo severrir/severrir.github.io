@@ -13,7 +13,7 @@ const EASE = [0.22, 1, 0.36, 1];
 
 export default function BookingPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", discord: "", email: "", commission: "" });
+  const [form, setForm] = useState({ name: "", discord: "", email: "", commission: "", budget: "" });
   const [status, setStatus] = useState("idle"); // idle | submitting | success | error
   const [error, setError] = useState("");
   const [touched, setTouched] = useState(false);
@@ -48,7 +48,7 @@ export default function BookingPage() {
 
   const reset = () => {
     audio.click();
-    setForm({ name: "", discord: "", email: "", commission: "" });
+    setForm({ name: "", discord: "", email: "", commission: "", budget: "" });
     setTouched(false);
     setStatus("idle");
     setError("");
@@ -173,15 +173,35 @@ export default function BookingPage() {
 
                   <label className="field">
                     <span className="field__label">
-                      What do you need? <span className="field__opt">optional</span>
+                      What do you need built? <span className="field__opt">optional</span>
                     </span>
                     <textarea
                       className="field__input field__textarea"
                       value={form.commission}
                       onChange={set("commission")}
-                      placeholder="Describe your project, what you need built, timeline, budget range, or any specific requirements..."
+                      placeholder="Describe the system you want — anticheat, combat, NPC AI, a full game framework — plus timeline and any must-haves."
                       rows="5"
                     />
+                  </label>
+
+                  <label className="field">
+                    <span className="field__label">
+                      Budget <span className="field__opt">optional</span>
+                    </span>
+                    <select
+                      className="field__input field__select"
+                      value={form.budget}
+                      onChange={set("budget")}
+                    >
+                      <option value="">Select a range…</option>
+                      <option value="under-500">Under $500</option>
+                      <option value="500-1500">$500 – $1,500</option>
+                      <option value="1500-3000">$1,500 – $3,000</option>
+                      <option value="3000-5000">$3,000 – $5,000</option>
+                      <option value="5000-plus">$5,000+</option>
+                      <option value="revshare">Revenue share / ongoing</option>
+                      <option value="unsure">Not sure yet — let's discuss</option>
+                    </select>
                   </label>
 
                   {status === "error" && (

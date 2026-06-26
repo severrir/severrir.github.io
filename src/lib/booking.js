@@ -15,11 +15,25 @@ const FORMSPREE_ENDPOINT =
   import.meta.env.VITE_FORMSPREE_ENDPOINT || "https://formspree.io/f/xgojkepa";
 const DISCORD_PROXY_URL = import.meta.env.VITE_DISCORD_PROXY_URL || "";
 
-export async function submitBooking({ name, discord, email }) {
+// Human-readable labels for the budget ranges the form offers, so the email/
+// Discord message reads "$1,500 – $3,000" instead of the raw option value.
+const BUDGET_LABELS = {
+  "under-500": "Under $500",
+  "500-1500": "$500 – $1,500",
+  "1500-3000": "$1,500 – $3,000",
+  "3000-5000": "$3,000 – $5,000",
+  "5000-plus": "$5,000+",
+  revshare: "Revenue share / ongoing",
+  unsure: "Not sure yet — wants to discuss",
+};
+
+export async function submitBooking({ name, discord, email, commission, budget }) {
   const payload = {
     name: name.trim(),
     discord: discord.trim(),
     email: (email || "").trim(),
+    commission: (commission || "").trim(),
+    budget: budget ? BUDGET_LABELS[budget] || budget : "",
     _subject: `New booking — ${name.trim()} (Discord: ${discord.trim()})`,
   };
 

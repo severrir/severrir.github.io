@@ -20,8 +20,11 @@ const SPHERE_RADIUS = 1.06;
 const PLANET_POS = [0, 0, -7];
 const PLANET_ROTATION = [-0.52, 0, 0.18];
 
-// Fixed camera setup — ZERO computation
-const CAMERA_POS = [0, 1.5, -1.0];
+// Fixed camera setup — ZERO computation.
+// Pulled back from the planet (vs the old [0,1.5,-1]) so the full ring system +
+// atmosphere glow sit comfortably inside the canvas with margin to spare — even
+// at max parallax tilt nothing reaches the canvas edge, so no hard ring cut-off.
+const CAMERA_POS = [0, 1.95, 0.8];
 const CAMERA_FOV = 42;
 const CAMERA_NEAR = 0.1;
 const CAMERA_FAR = 50;
@@ -224,8 +227,8 @@ export default function HeroPlanet() {
       onPointerDown={handlePress}
       style={{
         position: "relative",
-        width: "320px",
-        height: "320px",
+        width: "400px",
+        height: "400px",
         cursor: "pointer",
       }}
     >

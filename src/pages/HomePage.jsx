@@ -356,6 +356,8 @@ export default function HomePage() {
     if (singularityLock.current) return;
     singularityLock.current = true;
     setSingularity(true);
+    // pull the whole living site into the core (scene, text, atmosphere, grain)
+    document.body.classList.add("is-collapsing");
     audio.explode();
     // at peak black, teleport to the start
     setTimeout(() => {
@@ -366,12 +368,21 @@ export default function HomePage() {
       window.scrollTo(0, 0);
       audio.whoosh(0.14);
     }, 2050);
+    // restore the page from its crushed state while the core still fills the
+    // frame in full black — so the snap back to normal is never visible
+    setTimeout(() => {
+      document.body.classList.remove("is-collapsing");
+    }, 2150);
     // clear the overlay once we've fallen back through
     setTimeout(() => {
       setSingularity(false);
       singularityLock.current = false;
     }, 3100);
   }, []);
+
+  // Safety: never leave the page stuck in its collapsed state if HomePage
+  // unmounts mid-animation (e.g. a route change fires during the easter egg).
+  useEffect(() => () => document.body.classList.remove("is-collapsing"), []);
 
   return (
     <>
