@@ -32,9 +32,9 @@
   pointer-events: none;
   opacity: 0;
   background:
-    radial-gradient(70% 55% at 50% 50%, rgba(var(--accent-rgb), 0.12), transparent 60%),
-    radial-gradient(160% 110% at 50% 50%, transparent 30%, var(--space-void) 92%);
-  animation: warpFlash 0.85s cubic-bezier(0.4, 0, 0.2, 1) both;
+    radial-gradient(70% 55% at 50% 50%, rgba(var(--accent-rgb), 0.08), transparent 60%),
+    radial-gradient(160% 110% at 50% 50%, transparent 35%, var(--space-void) 90%);
+  animation: warpFlash 0.72s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
 
 /* a single soft accent bloom that swells then settles — a clean "warp jump"
@@ -48,21 +48,21 @@
   height: 40vmax;
   margin: -20vmax 0 0 -20vmax;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.18), transparent 64%);
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.14), transparent 68%);
   opacity: 0;
-  animation: warpBloom 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: warpBloom 0.72s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 @keyframes warpFlash {
   0% { opacity: 0; }
-  46% { opacity: 1; }
+  42% { opacity: 0.85; }
   100% { opacity: 0; }
 }
 
 @keyframes warpBloom {
-  0% { transform: scale(0.5); opacity: 0; }
-  46% { opacity: 0.9; }
-  100% { transform: scale(1.5); opacity: 0; }
+  0% { transform: scale(0.42); opacity: 0; }
+  42% { opacity: 0.7; }
+  100% { transform: scale(1.8); opacity: 0; }
 }
 
 /* Content layer for subpages. Inherits pointer-events:none from .ui-layer; the

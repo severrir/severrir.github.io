@@ -17,8 +17,8 @@ const BookingPage = lazy(() => import("@/pages/BookingPage.jsx"));
 // containing block for the homepage's position:fixed scene canvas and break it.
 const PAGE_VARIANTS = {
   initial: { opacity: 0 },
-  enter: { opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.08 } },
-  exit: { opacity: 0, transition: { duration: 0.4, ease: [0.4, 0, 1, 1] } },
+  enter: { opacity: 1, transition: { duration: 0.54, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.06 } },
+  exit: { opacity: 0, transition: { duration: 0.36, ease: [0.55, 0.085, 0.68, 0.53] } },
 };
 
 function Page({ children }) {
