@@ -1,0 +1,22 @@
+
+> severrir-solar-portfolio@1.0.0 dev
+> vite
+
+Port 5173 is in use, trying another one...
+Port 5174 is in use, trying another one...
+Port 5175 is in use, trying another one...
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m306[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5176[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m6:06:33 PM[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33m@react-three/fiber, @react-three/drei, @react-three/postprocessing, postprocessing, three[32m[39m
+[2m6:06:33 PM[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m6:09:03 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/ui/HeroPlanet.jsx, /src/index.css[22m
+[2m6:09:12 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/ui/HeroPlanet.jsx, /src/index.css[22m
+[2m6:09:22 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/ui/HeroPlanet.jsx, /src/index.css[22m
+[2m6:09:34 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/beats.css[22m
+[2m6:12:59 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/ui/HeroPlanet.jsx, /src/index.css[22m
+[2m6:14:51 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/scene/ServicesScene.jsx, /src/index.css[22m
+[2m6:14:58 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/scene/ServicesScene.jsx, /src/index.css[22m
+[2m6:23:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/ui/HeroPlanet.jsx, /src/index.css[22m
