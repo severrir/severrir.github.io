@@ -55,18 +55,17 @@
 
 .hero-planet {
   position: relative;
-  width: clamp(280px, 32vw, 460px);
-  aspect-ratio: 1 / 1;
+  width: 320px;
+  height: 320px;
   cursor: pointer;
-  /* cinematic warp-in: the planet eases in from small + offset after the
-     wordmark settles, so it never competes with the camera fly-in */
+  /* entrance fade-in without scale transform (which can cause sizing race conditions) */
   animation: heroPlanetIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes heroPlanetIn {
-  0% { opacity: 0; transform: scale(0.62) translateX(46px); }
+  0% { opacity: 0; }
   60% { opacity: 1; }
-  100% { opacity: 1; transform: scale(1) translateX(0); }
+  100% { opacity: 1; }
 }
 
 .hero-planet__halo {

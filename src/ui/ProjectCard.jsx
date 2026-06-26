@@ -1,14 +1,11 @@
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowIcon, CloseIcon, CodeIcon, GithubIcon, PlayIcon } from "@/ui/icons.jsx";
 import { audio } from "@/audio/audioEngine.js";
 import "@/styles/projects.css";
 
-// Lazy so the card's mini 3D canvas (and three.js) stay out of the initial
-// bundle; by the time a card can open, the main Scene chunk has already loaded.
 const MiniPlanet = lazy(() => import("@/scene/MiniPlanet.jsx"));
 
-// Turn a YouTube watch/share URL into an autoplay embed URL for the lightbox.
 function youTubeEmbed(url) {
   if (!url) return null;
   let id = null;
@@ -24,14 +21,18 @@ function youTubeEmbed(url) {
 
 export default function ProjectCard({ project, index, total, origin, phase, onClose, onNext, onPrev }) {
   const cardRef = useRef();
-  const closeRef = useRef();
+  const closeButtonRef = useRef();
+
   const [shown, setShown] = useState(false);
   const [transformOrigin, setTransformOrigin] = useState("50% 50%");
   const [showVideo, setShowVideo] = useState(false);
-  const embed = youTubeEmbed(project.demo);
-  const isClosing = useRef(false);
 
-  // Grow out of (and collapse back toward) the planet's on-screen position.
+  const embed = youTubeEmbed(project.demo);
+
+  // Track if close handler is in flight to prevent rapid re-triggers
+  const closeInFlight = useRef(false);
+
+  // Calculate transform origin for card growth animation
   useLayoutEffect(() => {
     const el = cardRef.current;
     if (el && origin) {
@@ -42,48 +43,96 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
     }
   }, [origin, project.id]);
 
+  // Handle visibility based on phase
   useLayoutEffect(() => {
     if (phase === "out") {
       setShown(false);
+      closeInFlight.current = false;
       return;
     }
+    // Defer visibility to next frame to ensure CSS animations work correctly
     const id = requestAnimationFrame(() => setShown(true));
     return () => cancelAnimationFrame(id);
   }, [phase, project.id]);
 
-  // Close the video when switching projects or closing the card.
-  useEffect(() => setShowVideo(false), [project.id, phase]);
-
-  // Reset close flag when card opens/changes
+  // Close video when project changes or card closes
   useEffect(() => {
-    if (phase === "in") {
-      isClosing.current = false;
+    setShowVideo(false);
+  }, [project.id, phase]);
+
+  // CLOSE BUTTON: Single, direct handler with guard against re-entry
+  // This is called BOTH by click and by keyboard (Escape key)
+  const handleClose = () => {
+    // Guard: if close is already in flight, ignore subsequent calls
+    if (closeInFlight.current) {
+      return;
     }
-  }, [phase, project.id]);
+    closeInFlight.current = true;
 
-  // Direct close button handler to ensure it always works
-  const handleDirectClose = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isClosing.current) return; // prevent multiple rapid clicks
-    isClosing.current = true;
+    // Call parent's close handler — it drives the state update
     onClose();
-    // Failsafe: reset flag after 1 second in case close handler doesn't complete
-    setTimeout(() => { if (phase === "in") isClosing.current = false; }, 1000);
-  }, [onClose, phase]);
+  };
 
-  // While the video is open, Esc closes it first (capture phase) instead of the
-  // whole card, so one tap backs out one level at a time.
+  // Attach close button handler directly to DOM element to ensure it always works
+  // This runs once when the component mounts and properly cleans up
+  useEffect(() => {
+    const button = closeButtonRef.current;
+    if (!button) return;
+
+    const handleClick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleClose();
+    };
+
+    // Use capture phase to ensure we catch the click before other handlers
+    button.addEventListener("click", handleClick, { capture: true });
+    button.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleClose();
+      }
+    });
+
+    return () => {
+      button.removeEventListener("click", handleClick, { capture: true });
+    };
+  }, []);
+
+  // Keyboard shortcut: Escape to close (but only when card is shown and video is not open)
+  useEffect(() => {
+    if (!shown || showVideo) return;
+
+    const handleKeydown = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        handleClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeydown, { capture: true });
+    return () => {
+      window.removeEventListener("keydown", handleKeydown, { capture: true });
+    };
+  }, [shown, showVideo]);
+
+  // Video escape key: closes video first before closing card
   useEffect(() => {
     if (!showVideo) return;
-    const onKey = (e) => {
+
+    const handleKeydown = (e) => {
       if (e.key === "Escape") {
         e.stopImmediatePropagation();
+        e.preventDefault();
         setShowVideo(false);
       }
     };
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
+
+    window.addEventListener("keydown", handleKeydown, { capture: true });
+    return () => {
+      window.removeEventListener("keydown", handleKeydown, { capture: true });
+    };
   }, [showVideo]);
 
   const accent = project.visual.rimColor;
@@ -109,12 +158,11 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
           {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
         </span>
         <button
-          ref={closeRef}
+          ref={closeButtonRef}
           className="card__close"
-          onClick={handleDirectClose}
-          onPointerDown={handleDirectClose}
           aria-label="Close project"
           type="button"
+          tabIndex={0}
         >
           <CloseIcon />
         </button>
@@ -143,6 +191,7 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
           {embed ? (
             <button
               className="btn btn-primary"
+              type="button"
               onClick={() => {
                 audio.click();
                 setShowVideo(true);
@@ -163,7 +212,7 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
         </div>
 
         <div className="card__nav">
-          <button className="card__nav-btn" onClick={onPrev} aria-label="Previous project">
+          <button className="card__nav-btn" type="button" onClick={onPrev} aria-label="Previous project">
             <ArrowIcon size={14} /> Prev
           </button>
           {project.repo ? (
@@ -179,7 +228,7 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
           ) : (
             <span className="card__repo-link is-muted">No public repo</span>
           )}
-          <button className="card__nav-btn" onClick={onNext} aria-label="Next project">
+          <button className="card__nav-btn" type="button" onClick={onNext} aria-label="Next project">
             Next <ArrowIcon size={14} />
           </button>
         </div>
@@ -197,6 +246,7 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
             <div className="card__video-stage" onClick={(e) => e.stopPropagation()}>
               <button
                 className="card__video-close"
+                type="button"
                 onClick={() => setShowVideo(false)}
                 aria-label="Close video"
               >

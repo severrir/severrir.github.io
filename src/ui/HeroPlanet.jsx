@@ -1,19 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { makePlanetMaterial } from "@/scene/planetShader.js";
 import { useReducedMotion, pointer } from "@/scene/sceneEnv.js";
 import { audio } from "@/audio/audioEngine.js";
 
-// A cinematic ringed gas giant (Saturn-like) for the hero — warm, soft-lit, and
-// glowing rather than the hard wireframe it replaced. It slowly rotates, leans
-// toward the cursor for a living 3D feel, and on hover the rings open + brighten
-// and the whole world swells a touch. High-poly sphere + additive atmosphere
-// shells mean no faceted edges and no hard canvas box (the canvas is transparent
-// and the glow bleeds past it via the CSS halo).
-const SATURN = {
+// Fixed Saturn configuration — no variations
+const SATURN_CONFIG = {
   pattern: "bands",
-  // narrow A→B range keeps the bands smooth and golden (no dark cloud blobs)
   colorA: "#b08a4c",
   colorB: "#dcb878",
   colorC: "#f8edd2",
@@ -22,52 +16,58 @@ const SATURN = {
   rimPower: 2.6,
 };
 
-const RADIUS = 1.06;
-// The planet shader lights whatever faces the world origin (its "sun"), so the
-// planet must sit OFF origin or it renders fully dark. Park it out on -Z with the
-// lit hemisphere facing the camera (which sits between it and the origin).
-const POS = [0, 0, -7];
+const SPHERE_RADIUS = 1.06;
+const PLANET_POS = [0, 0, -7];
+const PLANET_ROTATION = [-0.52, 0, 0.18];
 
-function Saturn({ hovered, pressedAt }) {
+// Fixed camera setup — ZERO computation
+const CAMERA_POS = [0, 1.5, -1.0];
+const CAMERA_FOV = 42;
+const CAMERA_NEAR = 0.1;
+const CAMERA_FAR = 50;
+
+function SaturnMesh({ hovered, pressedAt }) {
   const reduced = useReducedMotion();
   const { camera } = useThree();
-  const size = useThree((s) => s.size); // re-frame whenever the canvas resizes
-  const tilt = useRef(); // outer tilt group (parallax leans this)
-  const spin = useRef(); // the rotating planet body
+  const tilt = useRef();
+  const spin = useRef();
   const ringMat = useRef([]);
-  const material = useMemo(() => makePlanetMaterial(SATURN), []);
-  const cameraSynchronized = useRef(false);
+  const material = useMemo(() => makePlanetMaterial(SATURN_CONFIG), []);
+  const setupDone = useRef(false);
+
+  // ONE-TIME camera setup — happens exactly once, never recalculated
+  useEffect(() => {
+    if (setupDone.current) return;
+    camera.position.set(...CAMERA_POS);
+    camera.lookAt(...PLANET_POS);
+    camera.fov = CAMERA_FOV;
+    camera.near = CAMERA_NEAR;
+    camera.far = CAMERA_FAR;
+    // Force aspect to container's current ratio
+    const w = camera.getWorldDirection(new THREE.Vector3()).length();
+    // Match the canvas container's aspect ratio directly
+    setTimeout(() => {
+      const container = document.querySelector(".hero-planet");
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        camera.aspect = rect.width / rect.height;
+        camera.updateProjectionMatrix();
+      }
+      setupDone.current = true;
+    }, 0);
+  }, [camera]);
 
   useEffect(() => () => material.dispose(), [material]);
-
-  // Synchronize camera immediately when size is available, to prevent race conditions
-  // during the hero planet's entrance animation.
-  useEffect(() => {
-    if (size.width > 0 && size.height > 0 && !cameraSynchronized.current) {
-      camera.position.set(0, 1.5, -1.0);
-      camera.lookAt(POS[0], POS[1], POS[2]);
-      camera.aspect = size.width / size.height;
-      camera.updateProjectionMatrix();
-      cameraSynchronized.current = true;
-    }
-  }, [size, camera]);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 1 / 30);
     const t = state.clock.elapsedTime;
 
-    // On every frame, ensure camera position and LookAt are locked to prevent
-    // any drift. Aspect ratio only updates if size actually changes.
-    camera.position.set(0, 1.5, -1.0);
-    camera.lookAt(POS[0], POS[1], POS[2]);
-    if (size.width > 0 && size.height > 0) {
-      const aspect = size.width / size.height;
-      if (Math.abs(camera.aspect - aspect) > 0.0001) {
-        camera.aspect = aspect;
-        camera.updateProjectionMatrix();
-      }
-    }
+    // Lock camera EVERY frame to absolute values — no drift, no variance
+    camera.position.set(...CAMERA_POS);
+    camera.lookAt(...PLANET_POS);
 
+    // Update material uniforms
     material.uniforms.uTime.value = t;
     material.uniforms.uHover.value = THREE.MathUtils.lerp(
       material.uniforms.uHover.value,
@@ -75,10 +75,12 @@ function Saturn({ hovered, pressedAt }) {
       0.1
     );
 
-    // Body spin — eases faster on hover.
-    if (spin.current && !reduced) spin.current.rotation.y += dt * (hovered ? 0.34 : 0.16);
+    // Rotation
+    if (spin.current && !reduced) {
+      spin.current.rotation.y += dt * (hovered ? 0.34 : 0.16);
+    }
 
-    // Lean toward the pointer (parallax) layered on the base Saturn tilt.
+    // Parallax tilt toward cursor
     if (tilt.current) {
       const px = reduced ? 0 : pointer.x;
       const py = reduced ? 0 : pointer.y;
@@ -88,52 +90,97 @@ function Saturn({ hovered, pressedAt }) {
       tilt.current.rotation.y = THREE.MathUtils.lerp(tilt.current.rotation.y, targetY, 0.06);
       tilt.current.rotation.z = 0.18;
 
-      // hover swell + click punch
+      // Hover swell + click punch
       const since = t - pressedAt.current;
       let s = THREE.MathUtils.lerp(tilt.current.scale.x, hovered ? 1.05 : 1, 0.1);
-      if (since >= 0 && since < 0.4) s += Math.sin((since / 0.4) * Math.PI) * 0.06 * (1 - since / 0.4);
+      if (since >= 0 && since < 0.4) {
+        s += Math.sin((since / 0.4) * Math.PI) * 0.06 * (1 - since / 0.4);
+      }
       tilt.current.scale.setScalar(s);
     }
 
-    // Rings brighten on hover.
-    const base = [0.55, 0.34, 0.2];
-    ringMat.current.forEach((m, i) => {
-      if (m) m.opacity = THREE.MathUtils.lerp(m.opacity, base[i] * (hovered ? 1.6 : 1), 0.1);
+    // Ring opacity on hover
+    const baseOpacities = [0.55, 0.34, 0.2];
+    ringMat.current.forEach((mat, i) => {
+      if (mat) {
+        mat.opacity = THREE.MathUtils.lerp(
+          mat.opacity,
+          baseOpacities[i] * (hovered ? 1.6 : 1),
+          0.1
+        );
+      }
     });
   });
 
   return (
-    <group ref={tilt} position={POS} rotation={[-0.52, 0, 0.18]}>
+    <group ref={tilt} position={PLANET_POS} rotation={PLANET_ROTATION}>
       <group ref={spin}>
         <mesh material={material}>
-          <sphereGeometry args={[RADIUS, 96, 96]} />
+          <sphereGeometry args={[SPHERE_RADIUS, 96, 96]} />
         </mesh>
       </group>
 
-      {/* atmosphere shells → soft volumetric glow, kept tight so the glow falls
-          off well inside the canvas (no rectangular edge clip) */}
+      {/* Glow shells */}
       <mesh scale={1.08}>
-        <sphereGeometry args={[RADIUS, 48, 48]} />
-        <meshBasicMaterial color={SATURN.rimColor} transparent opacity={0.16} side={THREE.BackSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <sphereGeometry args={[SPHERE_RADIUS, 48, 48]} />
+        <meshBasicMaterial
+          color={SATURN_CONFIG.rimColor}
+          transparent
+          opacity={0.16}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
       </mesh>
       <mesh scale={1.18}>
-        <sphereGeometry args={[RADIUS, 32, 32]} />
-        <meshBasicMaterial color={SATURN.rimColor} transparent opacity={0.05} side={THREE.BackSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <sphereGeometry args={[SPHERE_RADIUS, 32, 32]} />
+        <meshBasicMaterial
+          color={SATURN_CONFIG.rimColor}
+          transparent
+          opacity={0.05}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
       </mesh>
 
-      {/* ring system — flat in the planet's equatorial (XZ) plane */}
+      {/* Rings */}
       <group>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <ringGeometry args={[1.5, 2.0, 160]} />
-          <meshBasicMaterial ref={(m) => (ringMat.current[0] = m)} color="#ecd9a8" transparent opacity={0.55} side={THREE.DoubleSide} depthWrite={false} toneMapped={false} />
+          <meshBasicMaterial
+            ref={(m) => (ringMat.current[0] = m)}
+            color="#ecd9a8"
+            transparent
+            opacity={0.55}
+            side={THREE.DoubleSide}
+            depthWrite={false}
+            toneMapped={false}
+          />
         </mesh>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <ringGeometry args={[2.07, 2.22, 160]} />
-          <meshBasicMaterial ref={(m) => (ringMat.current[1] = m)} color="#f6e8c6" transparent opacity={0.34} side={THREE.DoubleSide} depthWrite={false} toneMapped={false} />
+          <meshBasicMaterial
+            ref={(m) => (ringMat.current[1] = m)}
+            color="#f6e8c6"
+            transparent
+            opacity={0.34}
+            side={THREE.DoubleSide}
+            depthWrite={false}
+            toneMapped={false}
+          />
         </mesh>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <ringGeometry args={[1.28, 1.43, 128]} />
-          <meshBasicMaterial ref={(m) => (ringMat.current[2] = m)} color="#caa763" transparent opacity={0.2} side={THREE.DoubleSide} depthWrite={false} toneMapped={false} />
+          <meshBasicMaterial
+            ref={(m) => (ringMat.current[2] = m)}
+            color="#caa763"
+            transparent
+            opacity={0.2}
+            side={THREE.DoubleSide}
+            depthWrite={false}
+            toneMapped={false}
+          />
         </mesh>
       </group>
     </group>
@@ -144,21 +191,25 @@ export default function HeroPlanet() {
   const [hovered, setHovered] = useState(false);
   const [ready, setReady] = useState(false);
   const pressedAt = useRef(-10);
-  const canvasReady = useRef(false);
+  const containerRef = useRef();
 
-  // Ignore hover/press until the warp-in entrance has finished, so interacting
-  // mid-animation can't fight the entrance transform and glitch.
+  // Fixed entrance delay — no variance
   useEffect(() => {
-    const t = setTimeout(() => setReady(true), 1500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setReady(true), 1500);
+    return () => clearTimeout(timer);
   }, []);
 
-  const enter = () => {
+  const handleEnter = () => {
     if (!ready) return;
     setHovered(true);
     audio.hover();
   };
-  const press = () => {
+
+  const handleLeave = () => {
+    setHovered(false);
+  };
+
+  const handlePress = () => {
     if (!ready) return;
     pressedAt.current = performance.now() / 1000;
     audio.click();
@@ -166,21 +217,40 @@ export default function HeroPlanet() {
 
   return (
     <div
+      ref={containerRef}
       className="hero-planet"
-      onPointerEnter={enter}
-      onPointerLeave={() => setHovered(false)}
-      onPointerDown={press}
+      onPointerEnter={handleEnter}
+      onPointerLeave={handleLeave}
+      onPointerDown={handlePress}
+      style={{
+        position: "relative",
+        width: "320px",
+        height: "320px",
+        cursor: "pointer",
+      }}
     >
       <div className={`hero-planet__halo ${hovered ? "is-hover" : ""}`} />
       <Canvas
         dpr={1}
-        gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
-        camera={{ fov: 42, near: 0.1, far: 50 }}
-        style={{ width: "100%", height: "100%", display: "block" }}
-        onCreated={() => { canvasReady.current = true; }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: "low-power",
+        }}
+        camera={{
+          position: CAMERA_POS,
+          fov: CAMERA_FOV,
+          near: CAMERA_NEAR,
+          far: CAMERA_FAR,
+        }}
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "block",
+        }}
       >
         <ambientLight intensity={0.32} color="#ffe9c8" />
-        <Saturn hovered={hovered} pressedAt={pressedAt} />
+        <SaturnMesh hovered={hovered} pressedAt={pressedAt} />
       </Canvas>
     </div>
   );
