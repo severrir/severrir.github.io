@@ -92,10 +92,10 @@ function Body({ visual }) {
       <Orbit color={visual.rimColor} />
       <group position={POS}>
         <mesh ref={ref} material={material}>
-          <sphereGeometry args={[1.15, 64, 64]} />
+          <sphereGeometry args={[1.15, 48, 48]} />
         </mesh>
         <mesh scale={1.28}>
-          <sphereGeometry args={[1.15, 32, 32]} />
+          <sphereGeometry args={[1.15, 24, 24]} />
           <meshBasicMaterial
             color={visual.rimColor}
             transparent
@@ -114,8 +114,9 @@ export default function MiniPlanet({ visual }) {
   return (
     <Canvas
       // Small card-embedded canvas: low DPR cap + low-power GPU hint so it
-      // doesn't contend with the main scene's context.
-      dpr={[1, 1.5]}
+      // doesn't contend with the main scene's context. Capped tighter (1.25) so
+      // spinning up this second context on a planet click stays light.
+      dpr={[1, 1.25]}
       gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
       camera={{ fov: 32, near: 0.1, far: 50 }}
       style={{ width: "100%", height: "100%" }}

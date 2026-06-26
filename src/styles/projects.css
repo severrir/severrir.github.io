@@ -15,7 +15,10 @@
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.65),
     0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent) inset,
     0 0 60px -12px color-mix(in srgb, var(--accent) 40%, transparent);
-  backdrop-filter: blur(18px);
+  /* NB: no backdrop-filter. The card background is 96-98% opaque, so a blur is
+     all but invisible — but animating a backdrop blur while the card scales
+     0.2 -> 1 re-rasterizes the blur every frame, which was the hitch felt when
+     opening a planet. Dropping it makes the open animation composite cleanly. */
 
   /* materialize: grows from the planet's screen position (transform-origin set inline) */
   opacity: 0;
@@ -23,7 +26,6 @@
   transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.36s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: transform, opacity;
   backface-visibility: hidden;
-  perspective: 1000px;
 }
 
 .card.is-shown {
@@ -65,6 +67,26 @@
   display: block;
   position: relative;
   z-index: 1;
+}
+
+/* the mini-planet mounts a beat after the card opens (perf); fade it in so its
+   late arrival reads as intentional rather than a pop. */
+.card__stage-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  animation: cardStageIn 0.5s ease both;
+}
+
+@keyframes cardStageIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card__stage-canvas {
+    animation: none;
+  }
 }
 
 .card__stage-fade {

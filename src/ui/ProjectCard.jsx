@@ -26,11 +26,27 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
   const [shown, setShown] = useState(false);
   const [transformOrigin, setTransformOrigin] = useState("50% 50%");
   const [showVideo, setShowVideo] = useState(false);
+  // The mini-planet spins up a second WebGL context + compiles its shader, which
+  // hitches if it happens DURING the card's grow animation. Defer its mount to
+  // just after the open settles so the open composites cleanly and the planet
+  // fades in a beat later. Stays mounted across Next/Prev (only resets on close)
+  // so stepping projects doesn't recreate the context each time.
+  const [stageReady, setStageReady] = useState(false);
 
   const embed = youTubeEmbed(project.demo);
 
   // Track if close handler is in flight to prevent rapid re-triggers
   const closeInFlight = useRef(false);
+
+  useEffect(() => {
+    if (phase === "out") {
+      setStageReady(false);
+      return;
+    }
+    if (stageReady) return; // already up — don't remount when stepping projects
+    const t = setTimeout(() => setStageReady(true), 300);
+    return () => clearTimeout(t);
+  }, [phase, stageReady]);
 
   // Calculate transform origin for card growth animation
   useLayoutEffect(() => {
@@ -150,9 +166,13 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
       <span className="panel-bracket panel-bracket--br" aria-hidden="true" />
 
       <div className="card__stage">
-        <Suspense fallback={null}>
-          <MiniPlanet visual={project.visual} />
-        </Suspense>
+        {stageReady && (
+          <div className="card__stage-canvas">
+            <Suspense fallback={null}>
+              <MiniPlanet visual={project.visual} />
+            </Suspense>
+          </div>
+        )}
         <div className="card__stage-fade" />
         <span className="card__index">
           {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
