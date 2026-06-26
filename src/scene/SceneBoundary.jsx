@@ -7,21 +7,25 @@ import { Component } from "react";
 export default class SceneBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { failed: false };
+    this.state = { failed: false, errorCount: 0 };
   }
 
   static getDerivedStateFromError() {
     return { failed: true };
   }
 
-  componentDidCatch(error) {
-    // surface it once for debugging; do not loop
-    console.error("[scene] render error, falling back to static backdrop:", error);
+  componentDidCatch(error, info) {
+    // Log error for debugging but protect against spam
+    this.setState(prev => ({ errorCount: prev.errorCount + 1 }));
+    if (this.state.errorCount < 3) {
+      console.error("[scene] render error, falling back to static backdrop:", error);
+      if (info) console.error("[scene] error info:", info.componentStack);
+    }
   }
 
   render() {
     if (this.state.failed) {
-      return <div className="scene-fallback" aria-hidden="true" />;
+      return <div className="scene-fallback" aria-hidden="true" role="status" />;
     }
     return this.props.children;
   }
