@@ -3,12 +3,9 @@ import { useFrame } from "@react-three/fiber";
 import SpaceCanvas from "@/scene/SpaceCanvas.jsx";
 import ScenePlanet from "@/scene/ScenePlanet.jsx";
 
-// A calm, non-interactive backdrop for the content-heavy pages (Pricing,
-// Booking): the shared starfield plus a couple of distant decorative planets
-// drifting slowly. The canvas takes no pointer events, so the cards / form on
-// top stay effortless to use — the brief's priority for these pages.
-const DECOR = [
+const PLANETS = [
   {
+    id: "ice-planet",
     position: [-10, 3.6, -10],
     visual: {
       pattern: "ice",
@@ -22,6 +19,7 @@ const DECOR = [
     },
   },
   {
+    id: "ringed-planet",
     position: [6.5, -1.2, -18],
     visual: {
       pattern: "bands",
@@ -36,6 +34,7 @@ const DECOR = [
     },
   },
   {
+    id: "marble-planet",
     position: [-14, -4.6, -22],
     visual: {
       pattern: "marble",
@@ -49,6 +48,7 @@ const DECOR = [
     },
   },
   {
+    id: "circuit-planet",
     position: [15, 5.4, -26],
     visual: {
       pattern: "circuit",
@@ -62,6 +62,7 @@ const DECOR = [
     },
   },
   {
+    id: "lava-planet",
     position: [3, 7.2, -30],
     visual: {
       pattern: "lava",
@@ -76,35 +77,43 @@ const DECOR = [
   },
 ];
 
-function Drift({ children, speed = 0.01 }) {
-  const ref = useRef();
+function RotatingGroup({ children, rotationSpeed = 0.03 }) {
+  const groupRef = useRef();
+
   useFrame((_, delta) => {
-    if (ref.current) ref.current.rotation.y += Math.min(delta, 1 / 30) * speed;
+    if (groupRef.current) {
+      const clampedDelta = Math.min(delta, 1 / 30);
+      groupRef.current.rotation.y += clampedDelta * rotationSpeed;
+    }
   });
-  return <group ref={ref}>{children}</group>;
+
+  return <group ref={groupRef}>{children}</group>;
 }
 
 export default function AmbientScene() {
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const starCount = isMobile ? 650 : 1400;
+
   return (
     <SpaceCanvas
       camera={{ position: [0, 0.5, 13], fov: 52 }}
-      stars={typeof window !== "undefined" && window.innerWidth < 768 ? 650 : 1400}
+      stars={starCount}
       bloom={0.55}
       pointerEvents={false}
       className="scene-canvas scene-canvas--page scene-canvas--ambient"
     >
-      <Drift speed={0.03}>
-        {DECOR.map((d, i) => (
+      <RotatingGroup rotationSpeed={0.03}>
+        {PLANETS.map((planet) => (
           <ScenePlanet
-            key={i}
-            visual={d.visual}
-            position={d.position}
+            key={planet.id}
+            visual={planet.visual}
+            position={planet.position}
             interactive={false}
             spin={0.12}
             bob={0.3}
           />
         ))}
-      </Drift>
+      </RotatingGroup>
     </SpaceCanvas>
   );
 }
