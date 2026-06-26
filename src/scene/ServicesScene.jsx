@@ -12,12 +12,12 @@ import { services } from "@/data/services.js";
 // linking each specialism back to it. Same materials and motion language as the
 // homepage — different geography.
 const LAYOUT = {
-  fullstack: [0.2, 0.3, -6.5], // hub
-  frontend: [-5.8, 2.6, -3.4],
-  backend: [5.6, 2.9, -5.0],
-  ui: [-3.6, -2.9, -2.4],
-  pm: [4.6, -2.5, -3.6],
-  gamedesign: [-6.6, -0.5, -6.0],
+  fullstack: [0, 0.2, -4], // hub
+  frontend: [-6.2, 2.7, -2],
+  backend: [6.0, 3.0, -3.5],
+  ui: [-4.0, -3.0, -1.5],
+  pm: [5.0, -2.8, -2.5],
+  gamedesign: [-6.8, -0.5, -4],
 };
 
 const HUB = "fullstack";
@@ -68,7 +68,7 @@ function Spokes({ pulse }) {
 export default function ServicesScene({ selectedId, onSelect, onHover }) {
   return (
     <SpaceCanvas
-      camera={{ position: [0, 0.4, 11], fov: 50 }}
+      camera={{ position: [0, 0.4, 10.5], fov: 50 }}
       stars={typeof window !== "undefined" && window.innerWidth < 768 ? 450 : 950}
       bloom={0.62}
     >
@@ -81,11 +81,12 @@ export default function ServicesScene({ selectedId, onSelect, onHover }) {
           position={LAYOUT[s.id]}
           title={s.title}
           sub={s.blurb}
-          hud={`SVC // 0${i + 1}`}
+          hud="↗ click to open"
           selected={selectedId === s.id}
           dimmed={selectedId !== null && selectedId !== s.id}
           onSelect={() => onSelect(s.id)}
           onHover={(h) => onHover?.(h ? s.id : null)}
+          invite
         />
       ))}
 

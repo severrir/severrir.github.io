@@ -13,7 +13,7 @@ const SPREAD = 34;
 // The central star — a live plasma-surface shader + layered corona/halo +
 // prominences. Click it (in the interactive overview) and it detonates: a bright
 // flash, a blast of embers, a screen-shake + boom, then it re-ignites.
-export default function Sun({ interactive }) {
+export default function Sun({ interactive, onBlackHole }) {
   const core = useRef();
   const corona = useRef();
   const halo = useRef();
@@ -31,6 +31,9 @@ export default function Sun({ interactive }) {
   const flareUntil = useRef(-1);
   const explodeAt = useRef(-100);
   const explodePending = useRef(false);
+  const clicks = useRef(0);
+  const bigPending = useRef(false); // next explosion is the supernova → black hole
+  const bigActive = useRef(false);
 
   // ember directions + warm colours, baked once
   const burst = useMemo(() => {
@@ -58,7 +61,17 @@ export default function Sun({ interactive }) {
     e.stopPropagation();
     explodePending.current = true;
     audio.explode();
-    shake(1.4);
+    clicks.current += 1;
+    // Third strike: the star goes supernova and collapses — the whole site gets
+    // pulled into the singularity (the page-level cinematic runs via onBlackHole).
+    if (clicks.current >= 3) {
+      clicks.current = 0;
+      bigPending.current = true;
+      shake(2.8);
+      onBlackHole?.();
+    } else {
+      shake(1.4);
+    }
   };
 
   useFrame((state, delta) => {
@@ -69,9 +82,12 @@ export default function Sun({ interactive }) {
     if (explodePending.current) {
       explodeAt.current = t;
       explodePending.current = false;
+      bigActive.current = bigPending.current;
+      bigPending.current = false;
     }
     const since = t - explodeAt.current;
     const exploding = since >= 0 && since < EXPLODE_DUR;
+    const bigMul = bigActive.current ? 1.9 : 1;
 
     let cs = 1;
     if (exploding) {
@@ -82,11 +98,11 @@ export default function Sun({ interactive }) {
     if (core.current) core.current.scale.setScalar(cs);
 
     if (flash.current) {
-      if (exploding && since < 0.55) {
+      if (exploding && since < 0.7) {
         flash.current.visible = true;
-        const k = since / 0.55;
-        flash.current.scale.setScalar(3 + k * 15);
-        if (flashMat.current) flashMat.current.opacity = (1 - k) * 0.4;
+        const k = since / (bigActive.current ? 0.7 : 0.55);
+        flash.current.scale.setScalar((3 + k * 15) * bigMul);
+        if (flashMat.current) flashMat.current.opacity = (1 - k) * (bigActive.current ? 0.7 : 0.4);
       } else if (flash.current.visible) flash.current.visible = false;
     }
 
@@ -95,9 +111,9 @@ export default function Sun({ interactive }) {
         particles.current.visible = true;
         const e = 1 - Math.pow(1 - Math.min(1, since / 1.7), 2);
         for (let i = 0; i < PCOUNT; i++) {
-          ppos[i * 3] = burst.dirs[i * 3] * SPREAD * e;
-          ppos[i * 3 + 1] = burst.dirs[i * 3 + 1] * SPREAD * e;
-          ppos[i * 3 + 2] = burst.dirs[i * 3 + 2] * SPREAD * e;
+          ppos[i * 3] = burst.dirs[i * 3] * SPREAD * bigMul * e;
+          ppos[i * 3 + 1] = burst.dirs[i * 3 + 1] * SPREAD * bigMul * e;
+          ppos[i * 3 + 2] = burst.dirs[i * 3 + 2] * SPREAD * bigMul * e;
         }
         particles.current.geometry.attributes.position.needsUpdate = true;
         if (pMat.current) pMat.current.opacity = 1 - Math.min(1, since / 2.2);

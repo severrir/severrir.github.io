@@ -26,6 +26,7 @@ export default function ScenePlanet({
   interactive = true,
   spin = 0.3,
   bob = 0.18,
+  invite = false,
 }) {
   const { camera, gl } = useThree();
   const reduced = useReducedMotion();
@@ -36,6 +37,8 @@ export default function ScenePlanet({
   const scanFace = useRef();
   const scanSpin = useRef();
   const scanMat = useRef();
+  const inviteFace = useRef();
+  const inviteMat = useRef();
   const punchAt = useRef(-10);
   const punchPending = useRef(false);
   const [hovered, setHovered] = useState(false);
@@ -96,6 +99,20 @@ export default function ScenePlanet({
       scanFace.current.visible = (scanMat.current?.opacity ?? 0) > 0.012;
       if (scanSpin.current && !reduced) scanSpin.current.rotation.z += dt * 0.7;
     }
+
+    // Persistent "click me" pulse ring — faces the camera and breathes so it's
+    // obvious the planets are interactive before anyone hovers.
+    if (inviteFace.current) {
+      inviteFace.current.lookAt(camera.position);
+      const show = invite && !selected && !hovered;
+      const pulse = 0.18 + 0.16 * (0.5 + 0.5 * Math.sin(t * 1.8 + seed));
+      const targetOp = show ? pulse : 0;
+      if (inviteMat.current) {
+        inviteMat.current.opacity = THREE.MathUtils.lerp(inviteMat.current.opacity, targetOp, 0.12);
+      }
+      const s = show ? 1 + 0.06 * Math.sin(t * 1.8 + seed) : 1;
+      inviteFace.current.scale.setScalar(s);
+    }
   });
 
   const enter = (e) => {
@@ -153,6 +170,25 @@ export default function ScenePlanet({
           depthWrite={false}
         />
       </mesh>
+
+      {/* persistent invite pulse ring (camera-facing) */}
+      {invite && (
+        <group ref={inviteFace}>
+          <mesh>
+            <ringGeometry args={[size * 1.66, size * 1.78, 64]} />
+            <meshBasicMaterial
+              ref={inviteMat}
+              color={rim}
+              transparent
+              opacity={0}
+              side={THREE.DoubleSide}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
+      )}
 
       {/* HUD scan ring on hover */}
       <group ref={scanFace} visible={false}>

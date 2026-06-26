@@ -112,6 +112,16 @@ class AudioEngine {
     } else {
       this.enabled = false;
       this._stopAmbient();
+      // Hard-suspend the whole context so nothing — ambient or one-shots — can
+      // leak through after muting. resumeIfNeeded only resumes while enabled, so
+      // it stays silent until the user turns sound back on.
+      if (this.ctx && this.ctx.state === "running") {
+        setTimeout(() => {
+          if (!this.enabled && this.ctx && this.ctx.state === "running") {
+            this.ctx.suspend().catch(() => {});
+          }
+        }, 720); // let the ambient fade finish first
+      }
     }
   }
 

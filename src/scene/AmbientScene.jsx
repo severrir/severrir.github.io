@@ -9,7 +9,7 @@ import ScenePlanet from "@/scene/ScenePlanet.jsx";
 // top stay effortless to use — the brief's priority for these pages.
 const DECOR = [
   {
-    position: [-9, 3.4, -10],
+    position: [-10, 3.6, -10],
     visual: {
       pattern: "ice",
       colorA: "#16384a",
@@ -18,11 +18,11 @@ const DECOR = [
       rimColor: "#a8e8f0",
       rimStrength: 0.7,
       rimPower: 2.2,
-      size: 1.4,
+      size: 1.5,
     },
   },
   {
-    position: [10.5, -2.2, -14],
+    position: [11.5, -2.4, -15],
     visual: {
       pattern: "bands",
       colorA: "#2b1e08",
@@ -31,8 +31,47 @@ const DECOR = [
       rimColor: "#d9a24a",
       rimStrength: 0.55,
       rimPower: 3.0,
-      size: 1.9,
+      size: 2.0,
       rings: true,
+    },
+  },
+  {
+    position: [-14, -4.6, -22],
+    visual: {
+      pattern: "marble",
+      colorA: "#2a0e3a",
+      colorB: "#b45ee0",
+      colorC: "#e05eaf",
+      rimColor: "#b45ee0",
+      rimStrength: 0.6,
+      rimPower: 2.4,
+      size: 1.3,
+    },
+  },
+  {
+    position: [15, 5.4, -26],
+    visual: {
+      pattern: "circuit",
+      colorA: "#07201f",
+      colorB: "#146b78",
+      colorC: "#5ee6e0",
+      rimColor: "#5ee6e0",
+      rimStrength: 0.6,
+      rimPower: 3.0,
+      size: 1.1,
+    },
+  },
+  {
+    position: [3, 7.2, -30],
+    visual: {
+      pattern: "lava",
+      colorA: "#2b0e0a",
+      colorB: "#7a2218",
+      colorC: "#ff8a3d",
+      rimColor: "#e8453c",
+      rimStrength: 0.7,
+      rimPower: 3.0,
+      size: 0.95,
     },
   },
 ];
@@ -49,8 +88,8 @@ export default function AmbientScene() {
   return (
     <SpaceCanvas
       camera={{ position: [0, 0.5, 13], fov: 52 }}
-      stars={typeof window !== "undefined" && window.innerWidth < 768 ? 420 : 850}
-      bloom={0.5}
+      stars={typeof window !== "undefined" && window.innerWidth < 768 ? 650 : 1400}
+      bloom={0.55}
       pointerEvents={false}
       className="scene-canvas scene-canvas--page scene-canvas--ambient"
     >

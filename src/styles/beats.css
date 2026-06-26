@@ -55,30 +55,45 @@
 
 .hero-planet {
   position: relative;
-  width: clamp(190px, 21vw, 290px);
+  width: clamp(280px, 32vw, 460px);
   aspect-ratio: 1 / 1;
   cursor: pointer;
+  /* cinematic warp-in: the planet eases in from small + offset after the
+     wordmark settles, so it never competes with the camera fly-in */
+  animation: heroPlanetIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes heroPlanetIn {
+  0% { opacity: 0; transform: scale(0.62) translateX(46px); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1) translateX(0); }
 }
 
 .hero-planet__halo {
   position: absolute;
-  inset: -8%;
+  inset: 16%;
   border-radius: 50%;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(var(--accent-rgb), 0.22) 0%,
-    rgba(var(--accent-rgb), 0.08) 40%,
-    transparent 68%
+    rgba(255, 200, 120, 0.16) 0%,
+    rgba(255, 180, 90, 0.06) 44%,
+    transparent 62%
   );
-  filter: blur(6px);
-  opacity: 0.8;
-  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: blur(20px);
+  opacity: 0.7;
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
 }
 
 .hero-planet__halo.is-hover {
   opacity: 1;
-  transform: scale(1.08);
+  transform: scale(1.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-planet {
+    animation: none;
+  }
 }
 
 .beat-name__cta {

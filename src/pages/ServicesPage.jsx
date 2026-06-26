@@ -59,13 +59,14 @@ export default function ServicesPage() {
           transition={{ duration: 0.8, ease: EASE, delay: 0.1 }}
         >
           <span className="page-eyebrow">02 / Services</span>
-          <h1 className="page-title">Six disciplines, one orbit.</h1>
+          <h1 className="page-title">Pick a world to explore.</h1>
           <p className="page-lede">
-            Every project pulls from the same toolkit. Tap a world to see what it covers —
-            or scan the full list below.
+            Six disciplines, one toolkit. Each planet is a service — click one to see what
+            it covers, or scan the full list below.
           </p>
-          <span className="svc-hero__hint" aria-hidden="true">
-            <span className="svc-hero__hint-dot" /> Drag to rotate · tap a planet
+          <span className="svc-hero__hint">
+            <span className="svc-hero__hint-pulse" aria-hidden="true" />
+            Click a planet · drag to rotate
           </span>
         </motion.div>
 

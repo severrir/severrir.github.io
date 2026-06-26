@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import ScrollCue from "@/ui/ScrollCue.jsx";
 import { audio } from "@/audio/audioEngine.js";
@@ -23,6 +23,16 @@ export default function NameBeat({ visible, onNext, onBook }) {
   const planetOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
   const planetY = useTransform(scrollYProgress, [0, 1], [0, -60]);
 
+  // Mount the second (hero-planet) canvas a beat AFTER the entrance reveals, so
+  // its shader compile never competes with the camera fly-in — keeping the
+  // entrance smooth. It then fades in via CSS (heroPlanetIn).
+  const [showPlanet, setShowPlanet] = useState(false);
+  useEffect(() => {
+    if (!visible) return;
+    const t = setTimeout(() => setShowPlanet(true), 850);
+    return () => clearTimeout(t);
+  }, [visible]);
+
   const book = () => {
     audio.click();
     onBook?.();
@@ -34,8 +44,8 @@ export default function NameBeat({ visible, onNext, onBook }) {
         <motion.span
           className="beat-name__eyebrow"
           initial={{ opacity: 0, y: 12 }}
-          animate={visible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, delay: 0.1, ease: EASE }}
+          animate={visible ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+          transition={{ duration: 0.7, delay: visible ? 0.1 : 0, ease: EASE }}
         >
           Roblox Systems Developer
         </motion.span>
@@ -47,9 +57,13 @@ export default function NameBeat({ visible, onNext, onBook }) {
               className="beat-name__char"
               aria-hidden="true"
               style={{ "--i": i }}
-              initial={{ opacity: 0, y: 30, filter: "blur(14px)" }}
-              animate={visible ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
-              transition={{ duration: 0.85, delay: 0.3 + i * 0.06, ease: EASE }}
+              initial={{ opacity: 0, y: 44, filter: "blur(18px)" }}
+              animate={
+                visible
+                  ? { opacity: 1, y: 0, filter: "blur(0px)" }
+                  : { opacity: 0, y: 44, filter: "blur(18px)" }
+              }
+              transition={{ duration: 0.95, delay: visible ? 0.25 + i * 0.085 : 0, ease: EASE }}
             >
               {ch}
             </motion.span>
@@ -59,8 +73,8 @@ export default function NameBeat({ visible, onNext, onBook }) {
         <motion.p
           className="beat-name__tagline"
           initial={{ opacity: 0 }}
-          animate={visible ? { opacity: 1 } : {}}
-          transition={{ duration: 1, delay: 1, ease: EASE }}
+          animate={visible ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 1, delay: visible ? 1 : 0, ease: EASE }}
         >
           Luau · modular game systems · anticheat · combat · NPC AI
         </motion.p>
@@ -68,8 +82,8 @@ export default function NameBeat({ visible, onNext, onBook }) {
         <motion.div
           className="beat-name__cta"
           initial={{ opacity: 0, y: 14 }}
-          animate={visible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 1.25, ease: EASE }}
+          animate={visible ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+          transition={{ duration: 0.8, delay: visible ? 1.15 : 0, ease: EASE }}
         >
           <button className="btn btn-primary" type="button" onClick={book}>
             Book a Consultation
@@ -81,9 +95,11 @@ export default function NameBeat({ visible, onNext, onBook }) {
       </motion.div>
 
       <motion.div className="beat-name__planet" style={{ opacity: planetOpacity, y: planetY }}>
-        <Suspense fallback={null}>
-          <HeroPlanet />
-        </Suspense>
+        {showPlanet && (
+          <Suspense fallback={null}>
+            <HeroPlanet />
+          </Suspense>
+        )}
       </motion.div>
 
       <ScrollCue label="Scroll" onClick={onNext} />

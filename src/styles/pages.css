@@ -32,15 +32,37 @@
   pointer-events: none;
   opacity: 0;
   background:
-    radial-gradient(120% 60% at 50% 50%, rgba(var(--accent-rgb), 0.16), transparent 60%),
-    radial-gradient(140% 100% at 50% 50%, transparent 40%, rgba(var(--void-rgb), 0.55) 100%);
-  animation: warpFlash 0.62s cubic-bezier(0.22, 1, 0.36, 1);
+    radial-gradient(70% 55% at 50% 50%, rgba(var(--accent-rgb), 0.12), transparent 60%),
+    radial-gradient(160% 110% at 50% 50%, transparent 30%, var(--space-void) 92%);
+  animation: warpFlash 0.85s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* a single soft accent bloom that swells then settles — a clean "warp jump"
+   rather than flashy streaks */
+.warp-veil::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40vmax;
+  height: 40vmax;
+  margin: -20vmax 0 0 -20vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.18), transparent 64%);
+  opacity: 0;
+  animation: warpBloom 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes warpFlash {
   0% { opacity: 0; }
-  35% { opacity: 1; }
+  46% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+@keyframes warpBloom {
+  0% { transform: scale(0.5); opacity: 0; }
+  46% { opacity: 0.9; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
 
 /* Content layer for subpages. Inherits pointer-events:none from .ui-layer; the

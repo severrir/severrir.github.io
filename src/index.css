@@ -309,6 +309,90 @@ body {
   margin-top: 2px;
 }
 
+/* ── Black-hole singularity overlay (sun easter egg) ───────────────────── */
+.singularity {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  pointer-events: all;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 46%, rgba(40, 20, 60, 0.2), transparent 55%);
+  animation: singEnd 3.1s forwards;
+}
+
+@keyframes singEnd {
+  0%, 76% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.singularity__vortex {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 160vmax;
+  height: 160vmax;
+  margin: -80vmax 0 0 -80vmax;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(111, 227, 255, 0.22) 40deg,
+    transparent 90deg,
+    rgba(255, 138, 40, 0.2) 160deg,
+    transparent 210deg,
+    rgba(166, 240, 255, 0.18) 290deg,
+    transparent 340deg
+  );
+  filter: blur(6px);
+  animation: singVortex 3.1s cubic-bezier(0.55, 0, 0.85, 0.4) forwards;
+}
+
+@keyframes singVortex {
+  0% { transform: rotate(0deg) scale(0.5); opacity: 0; }
+  14% { opacity: 1; }
+  68% { transform: rotate(760deg) scale(2.6); opacity: 0.9; }
+  100% { transform: rotate(1040deg) scale(3.4); opacity: 0; }
+}
+
+.singularity__ring {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 64vmax;
+  height: 64vmax;
+  margin: -32vmax 0 0 -32vmax;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 214, 150, 0.8);
+  box-shadow: 0 0 60px 6px rgba(255, 184, 77, 0.5), inset 0 0 40px rgba(255, 184, 77, 0.4);
+  animation: singRing 2.2s cubic-bezier(0.7, 0, 0.9, 0.35) forwards;
+}
+
+@keyframes singRing {
+  0% { transform: scale(1.5) rotate(0deg); opacity: 0; }
+  18% { opacity: 1; }
+  100% { transform: scale(0.02) rotate(420deg); opacity: 1; }
+}
+
+.singularity__core {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #000 58%, rgba(28, 12, 42, 0.95) 100%);
+  box-shadow: 0 0 70px 34px rgba(0, 0, 0, 0.85), 0 0 150px 70px rgba(90, 45, 140, 0.32);
+  animation: singCore 3.1s cubic-bezier(0.6, 0, 0.9, 0.42) forwards;
+}
+
+@keyframes singCore {
+  0% { transform: scale(0); }
+  44% { transform: scale(2.4); }
+  66% { transform: scale(320); }
+  100% { transform: scale(320); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -318,4 +402,20 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.05ms !important;
   }
+  /* keep the easter-egg readable: a simple fast fade to black + back */
+  .singularity {
+    animation: singEndReduced 1.2s forwards !important;
+    background: #000 !important;
+  }
+  .singularity__vortex,
+  .singularity__ring,
+  .singularity__core {
+    display: none;
+  }
+}
+
+@keyframes singEndReduced {
+  0% { opacity: 0; }
+  30%, 70% { opacity: 1; }
+  100% { opacity: 0; }
 }

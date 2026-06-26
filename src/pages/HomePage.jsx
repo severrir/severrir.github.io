@@ -30,13 +30,11 @@ function initialDeepLink() {
   return i >= 0 ? i : null;
 }
 
-// True once the visitor has already passed the splash this session — so
-// returning to the homepage via client-side nav doesn't replay the full
-// loader/fly-in. The first real load always shows the cinematic entrance.
-function alreadyEntered() {
-  if (typeof sessionStorage === "undefined") return false;
-  return sessionStorage.getItem("severrir-entered") === "1";
-}
+// Module-level (NOT sessionStorage): resets on every real page load/refresh, so
+// a reload ALWAYS replays the full splash + camera fly-in + entry swish, exactly
+// like the original site. It only stays true across in-app client-side
+// navigation, so bouncing back to home from another page skips the loader.
+let hasBooted = false;
 
 const MIN_LOADER_MS = 950;
 const HARD_CAP_MS = 1700; // absolute ceiling: reveal even if the scene is still compiling
@@ -46,7 +44,7 @@ const HINT_INTENSIFY_MS = 5500;
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const skipLoader = useRef(alreadyEntered());
+  const skipLoader = useRef(hasBooted);
 
   const [sceneReady, setSceneReady] = useState(false);
   const [minElapsed, setMinElapsed] = useState(false);
@@ -60,6 +58,13 @@ export default function HomePage() {
   const [interactive, setInteractive] = useState(false); // true once Beat 3 is reached
   const [hintActive, setHintActive] = useState(false);
   const [hintIntense, setHintIntense] = useState(false);
+  const [singularity, setSingularity] = useState(false); // sun → black-hole cinematic
+  const singularityLock = useRef(false);
+  // Gate the hero's letter-by-letter animation until the loader is fully gone,
+  // so the entrance text actually animates in clear view (otherwise it plays
+  // hidden behind the fading loader and looks like nothing happened on first
+  // load). On in-app return to home there's no loader, so it plays immediately.
+  const [heroReady, setHeroReady] = useState(skipLoader.current);
 
   const lenisRef = useRef(null);
   const exitTimer = useRef();
@@ -86,12 +91,31 @@ export default function HomePage() {
   const overview = activeIndex === null;
 
   // Cinematic letterbox bars frame the hero the instant the scene reveals, then
-  // glide away on the visitor's first scroll (see the Lenis handler below) —
-  // they're part of the entrance, not a timed overlay that snaps off on its own.
+  // glide away on their own once the camera fly-in has played (or earlier on the
+  // visitor's first scroll — see the Lenis handler below).
   useEffect(() => {
     if (!revealed) return;
     setBootCinematic(true);
   }, [revealed]);
+
+  // Auto-retract the letterbox after the entrance plays out — no scroll needed.
+  useEffect(() => {
+    if (loaderState !== "gone") return;
+    const t = setTimeout(() => {
+      if (!letterboxRetracted.current) {
+        letterboxRetracted.current = true;
+        setBootCinematic(false);
+      }
+    }, 3200);
+    return () => clearTimeout(t);
+  }, [loaderState]);
+
+  // Trigger the hero text/planet entrance once the loader is gone.
+  useEffect(() => {
+    if (loaderState !== "gone") return;
+    const t = setTimeout(() => setHeroReady(true), 80);
+    return () => clearTimeout(t);
+  }, [loaderState]);
 
   // Fire the entry swish the moment the loading screen is fully gone — i.e. when
   // the camera fly-in becomes visible. Auto-plays if audio is already unlocked;
@@ -187,11 +211,7 @@ export default function HomePage() {
     if (typeof localStorage === "undefined" || localStorage.getItem("severrir-sound") !== "off") {
       audio.setEnabled(true); // unlock audio via this gesture
     }
-    try {
-      sessionStorage.setItem("severrir-entered", "1");
-    } catch {
-      /* storage unavailable */
-    }
+    hasBooted = true; // remember within this page session (cleared on reload)
     setEntered(true);
   }, []);
 
@@ -329,6 +349,30 @@ export default function HomePage() {
     navigate("/booking");
   }, [navigate]);
 
+  // Sun easter egg: third click detonates the star into a black hole that pulls
+  // the whole site into the singularity, then we "fall through" back to the very
+  // start — scrolled to the top, card closed, everything normal again.
+  const triggerBlackHole = useCallback(() => {
+    if (singularityLock.current) return;
+    singularityLock.current = true;
+    setSingularity(true);
+    audio.explode();
+    // at peak black, teleport to the start
+    setTimeout(() => {
+      setActiveIndex(null);
+      letterboxRetracted.current = true;
+      setBootCinematic(false);
+      lenisRef.current?.scrollTo(0, { immediate: true });
+      window.scrollTo(0, 0);
+      audio.whoosh(0.14);
+    }, 2050);
+    // clear the overlay once we've fallen back through
+    setTimeout(() => {
+      setSingularity(false);
+      singularityLock.current = false;
+    }, 3100);
+  }, []);
+
   return (
     <>
       <SceneBoundary>
@@ -340,6 +384,7 @@ export default function HomePage() {
             onInteract={dismissHint}
             interactive={interactive}
             playIntro={revealed}
+            onBlackHole={triggerBlackHole}
           />
         </Suspense>
       </SceneBoundary>
@@ -352,11 +397,21 @@ export default function HomePage() {
         statusRight={activeIndex !== null ? projects[activeIndex].id.toUpperCase() : "OVERVIEW"}
       />
 
-      <div className={`ui-layer app-reveal ${revealed ? "is-revealed" : ""}`}>
+      <div
+        className="ui-layer app-reveal"
+        style={{
+          opacity: revealed ? 1 : 0,
+          transform: revealed ? "translateY(0)" : "translateY(10px)",
+          transition: "opacity 0.55s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
+      >
         <span id="top-anchor" aria-hidden="true" />
         <Nav onHome={goHome} onJump={jumpTo} />
 
-        <NameBeat visible={revealed} onNext={() => jumpTo("beat-what")} onBook={bookConsult} />
+        {/* visible flips to true once the loader is fully gone, so the hero's
+            letter-by-letter entrance animates in clear view (NameBeat holds the
+            letters hidden until then). */}
+        <NameBeat visible={heroReady} onNext={() => jumpTo("beat-what")} onBook={bookConsult} />
         <WhatIDoBeat onNext={() => jumpTo("beat-system")} />
         <SystemBeat onNext={() => jumpTo("about-section")} />
 
@@ -365,6 +420,16 @@ export default function HomePage() {
         <AboutSection />
         <ContactSection onBook={bookConsult} />
       </div>
+
+      {/* Black-hole singularity overlay — the whole frame is pulled into a
+          spinning vortex, collapses to black, then we fall back to the start. */}
+      {singularity && (
+        <div className="singularity" aria-hidden="true">
+          <div className="singularity__vortex" />
+          <div className="singularity__ring" />
+          <div className="singularity__core" />
+        </div>
+      )}
 
       {/* Rendered OUTSIDE .app-reveal: that wrapper has a transform, which would
           make it the containing block for the card's position:fixed and pin the

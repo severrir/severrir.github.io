@@ -3,44 +3,65 @@
   position: relative;
   min-height: 100vh;
   justify-content: flex-start !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   pointer-events: none; /* clicks fall through to the 3D planets behind */
-  padding-top: clamp(96px, 14vh, 150px) !important;
+  padding-top: clamp(92px, 13vh, 140px) !important;
 }
 
 .svc-hero__head {
-  max-width: 540px;
-  text-align: left;
+  max-width: 620px;
+  text-align: center;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .svc-hero__head .page-title {
-  max-width: 14ch;
+  max-width: 16ch;
+}
+.svc-hero__head .page-lede {
+  margin-left: auto;
+  margin-right: auto;
 }
 
+/* prominent "click a planet" pill so the interaction is unmistakable */
 .svc-hero__hint {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  margin-top: 22px;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  background: rgba(var(--accent-rgb), 0.08);
+  backdrop-filter: blur(6px);
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 12px;
-  letter-spacing: 0.12em;
-  color: var(--space-muted);
+  letter-spacing: 0.1em;
+  color: var(--accent-glow);
 }
 
-.svc-hero__hint-dot {
-  width: 7px;
-  height: 7px;
+.svc-hero__hint-pulse {
+  position: relative;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.8);
-  animation: svcHintPulse 2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.9);
+}
+.svc-hero__hint-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  animation: svcHintRipple 1.8s ease-out infinite;
 }
 
-@keyframes svcHintPulse {
-  0%, 100% { opacity: 0.4; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1.1); }
+@keyframes svcHintRipple {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
 }
 
 /* Detail panel for a selected world — anchored to the viewport (not the hero)

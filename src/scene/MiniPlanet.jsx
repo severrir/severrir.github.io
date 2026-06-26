@@ -9,7 +9,7 @@ import { makePlanetMaterial } from "@/scene/planetShader.js";
 // placed front-up-right of it — giving a properly lit 3/4 view with a soft
 // terminator instead of the dark, muddy unlit hemisphere.
 const POS = new THREE.Vector3(0, 0, -8);
-const ORBIT_R = 1.95;
+const ORBIT_R = 1.62;
 const ORBIT_TILT = [1.36, 0.16, 0]; // near edge-on so it reads as a flat ring plane
 
 // A glowing orbit ring with a little moon tracing it — turns the card's stage
@@ -75,10 +75,10 @@ function Body({ visual }) {
   useEffect(() => () => material.dispose(), [material]);
 
   useEffect(() => {
-    // Slightly above + to the side, looking at the planet so it reads as a lit
-    // 3/4 sphere — pulled back just enough (vs. the planet-only framing) that
-    // the orbit ring clears the frame edges.
-    camera.position.set(1.8, 1.15, -4.0);
+    // Centred head-on (slightly above) and pulled in close so the planet fills
+    // the card stage instead of sitting small in a corner — the orbit ring is
+    // near edge-on, so it still clears the frame.
+    camera.position.set(0, 0.42, -3.5);
     camera.lookAt(POS);
   }, [camera]);
 

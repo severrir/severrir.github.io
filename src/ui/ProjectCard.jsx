@@ -167,7 +167,7 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
             aria-label={`${project.title} demo video`}
             onClick={() => setShowVideo(false)}
           >
-            <div className="card__video-frame" onClick={(e) => e.stopPropagation()}>
+            <div className="card__video-stage" onClick={(e) => e.stopPropagation()}>
               <button
                 className="card__video-close"
                 onClick={() => setShowVideo(false)}
@@ -175,12 +175,22 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
               >
                 <CloseIcon />
               </button>
-              <iframe
-                src={embed}
-                title={`${project.title} demo`}
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
-              />
+              <span className="card__video-tag">
+                <span className="card__video-tag-dot" aria-hidden="true" />
+                DEMO FEED <span className="card__sys-sep">//</span> {project.id.toUpperCase()}
+              </span>
+              <div className="card__video-frame">
+                <iframe
+                  src={embed}
+                  title={`${project.title} demo`}
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              <span className="panel-bracket panel-bracket--tl" aria-hidden="true" />
+              <span className="panel-bracket panel-bracket--tr" aria-hidden="true" />
+              <span className="panel-bracket panel-bracket--bl" aria-hidden="true" />
+              <span className="panel-bracket panel-bracket--br" aria-hidden="true" />
             </div>
           </div>,
           document.body

@@ -60,7 +60,7 @@ function FogWash({ activeIndex }) {
   return null;
 }
 
-export default function Scene({ activeIndex, onSelect, onReady, onInteract, interactive, playIntro }) {
+export default function Scene({ activeIndex, onSelect, onReady, onInteract, interactive, playIntro, onBlackHole }) {
   const controlsRef = useRef();
   const anchorRefs = useRef(projects.map(() => createRef()));
   const bloomRef = useRef();
@@ -131,7 +131,7 @@ export default function Scene({ activeIndex, onSelect, onReady, onInteract, inte
 
       <Starfield count={starCount} />
       <ShootingStars />
-      <Sun interactive={interactive} />
+      <Sun interactive={interactive} onBlackHole={onBlackHole} />
       <Orbits projects={projects} />
       <AsteroidBelt radius={18.7} count={isMobile ? 130 : 320} />
       <Constellation anchorRefs={anchorRefs} interactive={interactive} />

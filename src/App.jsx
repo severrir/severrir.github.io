@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import HomePage from "@/pages/HomePage.jsx";
@@ -17,8 +17,8 @@ const BookingPage = lazy(() => import("@/pages/BookingPage.jsx"));
 // containing block for the homepage's position:fixed scene canvas and break it.
 const PAGE_VARIANTS = {
   initial: { opacity: 0 },
-  enter: { opacity: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
-  exit: { opacity: 0, transition: { duration: 0.32, ease: [0.4, 0, 1, 1] } },
+  enter: { opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.08 } },
+  exit: { opacity: 0, transition: { duration: 0.4, ease: [0.4, 0, 1, 1] } },
 };
 
 function Page({ children }) {
@@ -38,14 +38,18 @@ function Page({ children }) {
 export default function App() {
   const location = useLocation();
   const firstRender = useRef(true);
+  // Counts real navigations (not the first paint). Drives the warp veil so it
+  // NEVER flashes on initial load / reload — the homepage's own loader owns the
+  // entrance, exactly like the original site. The veil only plays when moving
+  // between pages.
+  const [navKey, setNavKey] = useState(0);
 
-  // Soft warp whoosh on every client-side navigation (after the first paint).
-  // No-op until audio is unlocked, so it never violates autoplay policy.
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
+    setNavKey((k) => k + 1);
     audio.whoosh(0.085);
     // Reset scroll to the top of the incoming page.
     window.scrollTo(0, 0);
@@ -53,9 +57,10 @@ export default function App() {
 
   return (
     <>
-      {/* Hyperspace streak that flashes across during a route change. Fixed and
-          standalone — it never wraps page content, so it can't affect layout. */}
-      <div className="warp-veil" key={location.pathname} aria-hidden="true" />
+      {/* Hyperspace streak that flashes across during a route change only. Fixed
+          and standalone — it never wraps page content, so it can't affect
+          layout, and it is absent on first load. */}
+      {navKey > 0 && <div className="warp-veil" key={navKey} aria-hidden="true" />}
 
       <AnimatePresence mode="wait" initial={false}>
         <Page key={location.pathname}>
