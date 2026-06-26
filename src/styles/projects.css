@@ -67,6 +67,11 @@
   display: block;
   position: relative;
   z-index: 1;
+  /* The mini-planet is purely decorative. Without this it captured pointer
+     events across the whole stage and ate clicks meant for the × button
+     sitting on top of it — the real, long-standing cause of "the close button
+     does nothing". A decorative canvas must never intercept UI clicks. */
+  pointer-events: none;
 }
 
 /* the mini-planet mounts a beat after the card opens (perf); fade it in so its
@@ -75,6 +80,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+  pointer-events: none; /* decorative — see note above */
   animation: cardStageIn 0.5s ease both;
 }
 
@@ -111,6 +117,7 @@
   position: absolute;
   top: 14px;
   right: 14px;
+  z-index: 3; /* above the stage canvas + fade so it always receives clicks */
   display: inline-flex;
   align-items: center;
   justify-content: center;

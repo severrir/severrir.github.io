@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowIcon, CloseIcon, CodeIcon, GithubIcon, PlayIcon } from "@/ui/icons.jsx";
 import { audio } from "@/audio/audioEngine.js";
@@ -76,45 +76,14 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
     setShowVideo(false);
   }, [project.id, phase]);
 
-  // CLOSE BUTTON: Single, direct handler with guard against re-entry
-  // This is called BOTH by click and by keyboard (Escape key)
-  const handleClose = () => {
-    // Guard: if close is already in flight, ignore subsequent calls
-    if (closeInFlight.current) {
-      return;
-    }
+  // CLOSE: one handler, guarded against double-fire. The guard self-resets when
+  // the card transitions to phase "out" (see the phase effect above), so it can
+  // never get stuck. Used by both the × button (onClick) and Escape.
+  const handleClose = useCallback(() => {
+    if (closeInFlight.current) return;
     closeInFlight.current = true;
-
-    // Call parent's close handler — it drives the state update
     onClose();
-  };
-
-  // Attach close button handler directly to DOM element to ensure it always works
-  // This runs once when the component mounts and properly cleans up
-  useEffect(() => {
-    const button = closeButtonRef.current;
-    if (!button) return;
-
-    const handleClick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      handleClose();
-    };
-
-    // Use capture phase to ensure we catch the click before other handlers
-    button.addEventListener("click", handleClick, { capture: true });
-    button.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        e.stopPropagation();
-        handleClose();
-      }
-    });
-
-    return () => {
-      button.removeEventListener("click", handleClick, { capture: true });
-    };
-  }, []);
+  }, [onClose]);
 
   // Keyboard shortcut: Escape to close (but only when card is shown and video is not open)
   useEffect(() => {
@@ -182,7 +151,7 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
           className="card__close"
           aria-label="Close project"
           type="button"
-          tabIndex={0}
+          onClick={handleClose}
         >
           <CloseIcon />
         </button>
