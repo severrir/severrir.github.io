@@ -49,10 +49,11 @@ export default function App() {
       firstRender.current = false;
       return;
     }
+    // Trigger nav transition effect
     setNavKey((k) => k + 1);
     audio.whoosh(0.085);
-    // Reset scroll to the top of the incoming page.
-    window.scrollTo(0, 0);
+    // Reset scroll to the top of the incoming page
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [location.pathname]);
 
   return (
