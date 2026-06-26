@@ -266,7 +266,7 @@ export default function HomePage() {
     }
     lenis.stop();
     const block = (e) => {
-      if (e.target.closest && e.target.closest(".card__body")) return;
+      if (e.target.closest && (e.target.closest(".card__body") || e.target.closest(".card__close"))) return;
       e.preventDefault();
     };
     window.addEventListener("wheel", block, { passive: false });
