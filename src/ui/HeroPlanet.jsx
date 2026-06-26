@@ -36,21 +36,31 @@ function Saturn({ hovered, pressedAt }) {
   const spin = useRef(); // the rotating planet body
   const ringMat = useRef([]);
   const material = useMemo(() => makePlanetMaterial(SATURN), []);
+  const cameraSynchronized = useRef(false);
 
   useEffect(() => () => material.dispose(), [material]);
+
+  // Synchronize camera immediately when size is available, to prevent race conditions
+  // during the hero planet's entrance animation.
+  useEffect(() => {
+    if (size.width > 0 && size.height > 0 && !cameraSynchronized.current) {
+      camera.position.set(0, 1.5, -1.0);
+      camera.lookAt(POS[0], POS[1], POS[2]);
+      camera.aspect = size.width / size.height;
+      camera.updateProjectionMatrix();
+      cameraSynchronized.current = true;
+    }
+  }, [size, camera]);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 1 / 30);
     const t = state.clock.elapsedTime;
 
-    // Lock the framing EVERY frame rather than only on a size effect. The canvas
-    // container is square, but R3F can briefly measure a zero/thin size on the
-    // first layout pass — which left the planet small + off-centre until a later
-    // resize "fixed itself". Re-asserting the camera + a matching aspect each
-    // frame removes that race for good (constant target → negligible cost).
+    // On every frame, ensure camera position and LookAt are locked to prevent
+    // any drift. Aspect ratio only updates if size actually changes.
+    camera.position.set(0, 1.5, -1.0);
+    camera.lookAt(POS[0], POS[1], POS[2]);
     if (size.width > 0 && size.height > 0) {
-      camera.position.set(0, 1.5, -1.0);
-      camera.lookAt(POS[0], POS[1], POS[2]);
       const aspect = size.width / size.height;
       if (Math.abs(camera.aspect - aspect) > 0.0001) {
         camera.aspect = aspect;
@@ -134,6 +144,7 @@ export default function HeroPlanet() {
   const [hovered, setHovered] = useState(false);
   const [ready, setReady] = useState(false);
   const pressedAt = useRef(-10);
+  const canvasReady = useRef(false);
 
   // Ignore hover/press until the warp-in entrance has finished, so interacting
   // mid-animation can't fight the entrance transform and glitch.
@@ -162,10 +173,11 @@ export default function HeroPlanet() {
     >
       <div className={`hero-planet__halo ${hovered ? "is-hover" : ""}`} />
       <Canvas
-        dpr={[1, 1.75]}
+        dpr={1}
         gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
         camera={{ fov: 42, near: 0.1, far: 50 }}
-        style={{ width: "100%", height: "100%" }}
+        style={{ width: "100%", height: "100%", display: "block" }}
+        onCreated={() => { canvasReady.current = true; }}
       >
         <ambientLight intensity={0.32} color="#ffe9c8" />
         <Saturn hovered={hovered} pressedAt={pressedAt} />

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowIcon, CloseIcon, CodeIcon, GithubIcon, PlayIcon } from "@/ui/icons.jsx";
 import { audio } from "@/audio/audioEngine.js";
@@ -24,10 +24,12 @@ function youTubeEmbed(url) {
 
 export default function ProjectCard({ project, index, total, origin, phase, onClose, onNext, onPrev }) {
   const cardRef = useRef();
+  const closeRef = useRef();
   const [shown, setShown] = useState(false);
   const [transformOrigin, setTransformOrigin] = useState("50% 50%");
   const [showVideo, setShowVideo] = useState(false);
   const embed = youTubeEmbed(project.demo);
+  const isClosing = useRef(false);
 
   // Grow out of (and collapse back toward) the planet's on-screen position.
   useLayoutEffect(() => {
@@ -51,6 +53,24 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
 
   // Close the video when switching projects or closing the card.
   useEffect(() => setShowVideo(false), [project.id, phase]);
+
+  // Reset close flag when card opens/changes
+  useEffect(() => {
+    if (phase === "in") {
+      isClosing.current = false;
+    }
+  }, [phase, project.id]);
+
+  // Direct close button handler to ensure it always works
+  const handleDirectClose = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isClosing.current) return; // prevent multiple rapid clicks
+    isClosing.current = true;
+    onClose();
+    // Failsafe: reset flag after 1 second in case close handler doesn't complete
+    setTimeout(() => { if (phase === "in") isClosing.current = false; }, 1000);
+  }, [onClose, phase]);
 
   // While the video is open, Esc closes it first (capture phase) instead of the
   // whole card, so one tap backs out one level at a time.
@@ -88,7 +108,14 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
         <span className="card__index">
           {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
         </span>
-        <button className="card__close" onClick={onClose} aria-label="Close project">
+        <button
+          ref={closeRef}
+          className="card__close"
+          onClick={handleDirectClose}
+          onPointerDown={handleDirectClose}
+          aria-label="Close project"
+          type="button"
+        >
           <CloseIcon />
         </button>
       </div>
