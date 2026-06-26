@@ -9,8 +9,8 @@ const PLANET_DATA = [
     visual: { pattern: "ice", colorA: "#16384a", colorB: "#a8e8f0", colorC: "#ffffff", rimColor: "#a8e8f0", rimStrength: 0.7, rimPower: 2.2, size: 1.5 },
   },
   {
-    position: [6.5, -1.2, -18],
-    visual: { pattern: "bands", colorA: "#2b1e08", colorB: "#9a6f24", colorC: "#ffe6a8", rimColor: "#d9a24a", rimStrength: 0.55, rimPower: 3.0, size: 1.6, rings: true },
+    position: [2.2, 0.8, -14],
+    visual: { pattern: "bands", colorA: "#2b1e08", colorB: "#9a6f24", colorC: "#ffe6a8", rimColor: "#d9a24a", rimStrength: 0.55, rimPower: 3.0, size: 1.4, rings: true },
   },
   {
     position: [-14, -4.6, -22],
