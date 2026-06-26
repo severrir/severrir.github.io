@@ -26,10 +26,18 @@ const PLANET_DATA = [
   },
 ];
 
-function PlanetRotation({ children, speed = 0.03 }) {
+// Gentle bounded SWAY rather than a continuous orbit. A full Y-rotation swept
+// the off-centre planets in a wide circle around the origin — passing close to
+// the camera (z=13) where they'd balloon up and then recede, which read as the
+// planets "moving closer and closer". A small oscillating angle keeps them
+// drifting/floating in place without ever approaching the camera.
+function PlanetSway({ children, amplitude = 0.1, period = 26 }) {
   const ref = useRef();
-  useFrame((_, delta) => {
-    if (ref.current) ref.current.rotation.y += Math.min(delta, 1 / 30) * speed;
+  useFrame((state) => {
+    if (!ref.current) return;
+    const t = state.clock.elapsedTime;
+    ref.current.rotation.y = Math.sin((t / period) * Math.PI * 2) * amplitude;
+    ref.current.rotation.x = Math.sin((t / (period * 1.6)) * Math.PI * 2) * amplitude * 0.4;
   });
   return <group ref={ref}>{children}</group>;
 }
@@ -45,11 +53,11 @@ export default function AmbientScene() {
       pointerEvents={false}
       className="scene-canvas scene-canvas--page scene-canvas--ambient"
     >
-      <PlanetRotation speed={0.03}>
+      <PlanetSway amplitude={0.1} period={28}>
         {PLANET_DATA.map((p, i) => (
           <ScenePlanet key={i} visual={p.visual} position={p.position} interactive={false} spin={0.12} bob={0.3} />
         ))}
-      </PlanetRotation>
+      </PlanetSway>
     </SpaceCanvas>
   );
 }
