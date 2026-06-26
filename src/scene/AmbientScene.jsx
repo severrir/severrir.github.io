@@ -22,7 +22,7 @@ const DECOR = [
     },
   },
   {
-    position: [11.5, -2.4, -15],
+    position: [6.5, -1.2, -18],
     visual: {
       pattern: "bands",
       colorA: "#2b1e08",
@@ -31,7 +31,7 @@ const DECOR = [
       rimColor: "#d9a24a",
       rimStrength: 0.55,
       rimPower: 3.0,
-      size: 2.0,
+      size: 1.6,
       rings: true,
     },
   },

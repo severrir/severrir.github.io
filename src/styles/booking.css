@@ -32,7 +32,23 @@
   font-size: 15px;
   line-height: 1.7;
   color: #c3c9d8;
-  margin: 0 0 26px;
+  margin: 0 0 18px;
+}
+
+.booking__commission {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #a8b0c3;
+  margin: 0 0 28px;
+  padding: 16px 14px;
+  border-left: 2px solid rgba(var(--accent-rgb), 0.4);
+  border-radius: 4px;
+  background: rgba(var(--accent-rgb), 0.06);
+}
+
+.booking__commission strong {
+  color: var(--space-bright);
+  font-weight: 600;
 }
 
 .booking__form {

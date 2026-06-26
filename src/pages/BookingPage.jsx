@@ -114,7 +114,11 @@ export default function BookingPage() {
                 <h1 className="booking__title">Book a consultation.</h1>
                 <p className="booking__lede">
                   Tell me who you are and where to find you. Consultations are free —
-                  I'll follow up to scope the work.
+                  I'll follow up to scope the work and discuss rates.
+                </p>
+                <p className="booking__commission">
+                  <strong>Pricing:</strong> Project commissions range from <strong>$500–$5000+</strong> depending on scope, complexity, and timeline.
+                  Retainer and revenue-share arrangements also available for ongoing partnerships.
                 </p>
 
                 <form className="booking__form" onSubmit={onSubmit} noValidate>
