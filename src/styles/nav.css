@@ -114,3 +114,68 @@
   border-color: var(--space-border);
   background: rgba(255, 255, 255, 0.03);
 }
+
+/* Drop the secondary links on small screens. This rule also exists in pages.css
+   (which the subpages load), but the HOMEPAGE only loads nav.css — so without it
+   here, all eight nav items rendered on the homepage and overflowed the phone,
+   forcing the whole page to scroll sideways. Defining it here fixes that. */
+@media (max-width: 720px) {
+  .nav__link--hide-sm {
+    display: none;
+  }
+}
+
+/* ── Phone widths ─────────────────────────────────────────────────────────
+   With the secondary links dropped, brand + Services + Pricing + Book + sound
+   still sit a touch wide at desktop sizes. Scale type, padding and gaps down in
+   two steps so the whole row fits a ~360-390px phone without clipping the Book
+   CTA. Overrides are scoped under .nav so they beat .nav__cta (in pages.css)
+   regardless of load order. */
+@media (max-width: 640px) {
+  .nav {
+    padding: 14px 14px;
+  }
+  .nav .nav__links {
+    gap: 6px;
+  }
+  .nav .nav__brand {
+    font-size: 16px;
+    letter-spacing: 0.12em;
+  }
+  .nav .nav__link--btn {
+    font-size: 12px;
+    padding: 8px 11px;
+    min-height: 40px;
+  }
+  .nav .nav__cta {
+    font-size: 12px;
+    padding: 8px 13px;
+  }
+}
+
+@media (max-width: 430px) {
+  .nav {
+    padding: 12px 10px;
+  }
+  .nav .nav__links {
+    gap: 5px;
+  }
+  .nav .nav__brand {
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    gap: 7px;
+  }
+  .nav .nav__brand-dot {
+    width: 7px;
+    height: 7px;
+  }
+  .nav .nav__link--btn {
+    font-size: 11.5px;
+    padding: 7px 9px;
+    min-height: 38px;
+  }
+  .nav .nav__cta {
+    font-size: 11.5px;
+    padding: 7px 11px;
+  }
+}

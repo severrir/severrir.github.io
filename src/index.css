@@ -40,6 +40,9 @@ html {
   -ms-overflow-style: none;
   /* Prevent iOS zoom on input focus */
   font-size: 16px;
+  /* Never allow sideways scroll from fixed/decorative bleed (vertical untouched,
+     so Lenis smooth scroll is unaffected). */
+  overflow-x: hidden;
 }
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
@@ -61,6 +64,7 @@ body {
   font-family: "Manrope", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
 #root {
@@ -106,7 +110,8 @@ body {
 
 .grain {
   position: fixed;
-  inset: -40px; /* bleed so the animated offset never exposes an edge */
+  inset: 0; /* tiled background — the jitter never exposes an edge, so no bleed
+               needed; a -40px bleed pushed horizontal page scroll on phones */
   z-index: 2;
   pointer-events: none;
   opacity: 0.055;
