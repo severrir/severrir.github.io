@@ -1,12 +1,33 @@
-import { useLayoutEffect, useRef, useState } from "react";
-import MiniPlanet from "@/scene/MiniPlanet.jsx";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArrowIcon, CloseIcon, CodeIcon, GithubIcon, PlayIcon } from "@/ui/icons.jsx";
+import { audio } from "@/audio/audioEngine.js";
 import "@/styles/projects.css";
+
+// Lazy so the card's mini 3D canvas (and three.js) stay out of the initial
+// bundle; by the time a card can open, the main Scene chunk has already loaded.
+const MiniPlanet = lazy(() => import("@/scene/MiniPlanet.jsx"));
+
+// Turn a YouTube watch/share URL into an autoplay embed URL for the lightbox.
+function youTubeEmbed(url) {
+  if (!url) return null;
+  let id = null;
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtu.be")) id = u.pathname.slice(1);
+    else id = u.searchParams.get("v");
+  } catch {
+    /* not a parseable URL */
+  }
+  return id ? `https://www.youtube.com/embed/${id}?autoplay=1&rel=0` : null;
+}
 
 export default function ProjectCard({ project, index, total, origin, phase, onClose, onNext, onPrev }) {
   const cardRef = useRef();
   const [shown, setShown] = useState(false);
   const [transformOrigin, setTransformOrigin] = useState("50% 50%");
+  const [showVideo, setShowVideo] = useState(false);
+  const embed = youTubeEmbed(project.demo);
 
   // Grow out of (and collapse back toward) the planet's on-screen position.
   useLayoutEffect(() => {
@@ -28,6 +49,23 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
     return () => cancelAnimationFrame(id);
   }, [phase, project.id]);
 
+  // Close the video when switching projects or closing the card.
+  useEffect(() => setShowVideo(false), [project.id, phase]);
+
+  // While the video is open, Esc closes it first (capture phase) instead of the
+  // whole card, so one tap backs out one level at a time.
+  useEffect(() => {
+    if (!showVideo) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.stopImmediatePropagation();
+        setShowVideo(false);
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [showVideo]);
+
   const accent = project.visual.rimColor;
 
   return (
@@ -37,8 +75,15 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
       style={{ "--accent": accent, transformOrigin }}
       aria-label={`${project.title} details`}
     >
+      <span className="panel-bracket panel-bracket--tl" aria-hidden="true" />
+      <span className="panel-bracket panel-bracket--tr" aria-hidden="true" />
+      <span className="panel-bracket panel-bracket--bl" aria-hidden="true" />
+      <span className="panel-bracket panel-bracket--br" aria-hidden="true" />
+
       <div className="card__stage">
-        <MiniPlanet visual={project.visual} />
+        <Suspense fallback={null}>
+          <MiniPlanet visual={project.visual} />
+        </Suspense>
         <div className="card__stage-fade" />
         <span className="card__index">
           {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
@@ -49,7 +94,12 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
       </div>
 
       <div className="card__body">
-        <span className="card__blurb">{project.blurb}</span>
+        <div className="card__meta">
+          <span className="card__blurb">{project.blurb}</span>
+          <span className="card__sys">
+            SYS 0{index + 1} <span className="card__sys-sep">//</span> {project.id}
+          </span>
+        </div>
         <h2 className="card__title">{project.title}</h2>
 
         <div className="card__tags">
@@ -63,9 +113,21 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
         <p className="card__desc">{project.description}</p>
 
         <div className="card__actions">
-          <a className="btn btn-primary" href={project.demo} target="_blank" rel="noreferrer">
-            <PlayIcon /> Watch Demo
-          </a>
+          {embed ? (
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                audio.click();
+                setShowVideo(true);
+              }}
+            >
+              <PlayIcon /> Watch Demo
+            </button>
+          ) : (
+            <a className="btn btn-primary" href={project.demo} target="_blank" rel="noreferrer">
+              <PlayIcon /> Watch Demo
+            </a>
+          )}
           {project.repo && (
             <a className="btn btn-ghost" href={project.repo} target="_blank" rel="noreferrer">
               <CodeIcon /> View Code
@@ -95,6 +157,34 @@ export default function ProjectCard({ project, index, total, origin, phase, onCl
           </button>
         </div>
       </div>
+
+      {showVideo &&
+        embed &&
+        createPortal(
+          <div
+            className="card__video"
+            role="dialog"
+            aria-label={`${project.title} demo video`}
+            onClick={() => setShowVideo(false)}
+          >
+            <div className="card__video-frame" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="card__video-close"
+                onClick={() => setShowVideo(false)}
+                aria-label="Close video"
+              >
+                <CloseIcon />
+              </button>
+              <iframe
+                src={embed}
+                title={`${project.title} demo`}
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>,
+          document.body
+        )}
     </aside>
   );
 }

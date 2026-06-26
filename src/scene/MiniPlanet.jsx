@@ -4,9 +4,65 @@ import * as THREE from "three";
 import { makePlanetMaterial } from "@/scene/planetShader.js";
 
 // A small spinning copy of the project's actual planet, embedded in the card.
-// Offset from the world origin so the shader's "sun at origin" lighting model
-// produces a proper lit side + terminator instead of a flat disc.
-const POS = new THREE.Vector3(6, 2.4, 5);
+// The shader lights whatever faces the world origin (its "sun"), so the planet
+// sits out on -Z (lit side facing +Z, toward the camera) and the camera is
+// placed front-up-right of it — giving a properly lit 3/4 view with a soft
+// terminator instead of the dark, muddy unlit hemisphere.
+const POS = new THREE.Vector3(0, 0, -8);
+const ORBIT_R = 1.95;
+const ORBIT_TILT = [1.36, 0.16, 0]; // near edge-on so it reads as a flat ring plane
+
+// A glowing orbit ring with a little moon tracing it — turns the card's stage
+// from "a planet on a dark grid" into "this project's world in its own system".
+function Orbit({ color }) {
+  const moon = useRef();
+  useFrame((_, delta) => {
+    if (moon.current) moon.current.rotation.z += delta * 0.7;
+  });
+  return (
+    <group position={POS} rotation={ORBIT_TILT}>
+      {/* crisp orbit lane */}
+      <mesh>
+        <torusGeometry args={[ORBIT_R, 0.012, 12, 180]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={0.55}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+      {/* soft wider halo so the lane glows rather than reads as a hard wire */}
+      <mesh>
+        <torusGeometry args={[ORBIT_R, 0.05, 12, 180]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={0.14}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+      {/* the orbiting moon + its glow, swept around the lane each frame */}
+      <group ref={moon}>
+        <mesh position={[ORBIT_R, 0, 0]}>
+          <sphereGeometry args={[0.085, 20, 20]} />
+          <meshBasicMaterial color="#f4f8ff" />
+        </mesh>
+        <mesh position={[ORBIT_R, 0, 0]} scale={2.6}>
+          <sphereGeometry args={[0.085, 14, 14]} />
+          <meshBasicMaterial
+            color={color}
+            transparent
+            opacity={0.4}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
+    </group>
+  );
+}
 
 function Body({ visual }) {
   const ref = useRef();
@@ -19,7 +75,10 @@ function Body({ visual }) {
   useEffect(() => () => material.dispose(), [material]);
 
   useEffect(() => {
-    camera.position.set(POS.x, POS.y + 0.3, POS.z + 3.2);
+    // Slightly above + to the side, looking at the planet so it reads as a lit
+    // 3/4 sphere — pulled back just enough (vs. the planet-only framing) that
+    // the orbit ring clears the frame edges.
+    camera.position.set(1.8, 1.15, -4.0);
     camera.lookAt(POS);
   }, [camera]);
 
@@ -29,22 +88,25 @@ function Body({ visual }) {
   });
 
   return (
-    <group position={POS}>
-      <mesh ref={ref} material={material}>
-        <sphereGeometry args={[1.15, 64, 64]} />
-      </mesh>
-      <mesh scale={1.28}>
-        <sphereGeometry args={[1.15, 32, 32]} />
-        <meshBasicMaterial
-          color={visual.rimColor}
-          transparent
-          opacity={0.16}
-          side={THREE.BackSide}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
-    </group>
+    <>
+      <Orbit color={visual.rimColor} />
+      <group position={POS}>
+        <mesh ref={ref} material={material}>
+          <sphereGeometry args={[1.15, 64, 64]} />
+        </mesh>
+        <mesh scale={1.28}>
+          <sphereGeometry args={[1.15, 32, 32]} />
+          <meshBasicMaterial
+            color={visual.rimColor}
+            transparent
+            opacity={0.16}
+            side={THREE.BackSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
+    </>
   );
 }
 

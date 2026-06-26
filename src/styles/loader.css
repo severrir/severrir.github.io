@@ -32,8 +32,33 @@
 }
 
 .loader__system {
-  width: clamp(200px, 42vw, 280px);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(220px, 46vw, 300px);
   aspect-ratio: 1;
+  perspective: 720px;
+}
+
+/* tilt the orbital plane so the flat SVG reads as a 3D system seen at an angle */
+.loader__plane {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  transform: rotateX(58deg);
+  transform-style: preserve-3d;
+  animation: loaderPlaneIn 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes loaderPlaneIn {
+  from {
+    transform: rotateX(74deg) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: rotateX(58deg) scale(1);
+    opacity: 1;
+  }
 }
 
 .loader__svg {
@@ -42,36 +67,44 @@
   overflow: visible;
 }
 
-/* orbit ring traces itself */
-.loader__orbit-ring {
+/* round, face-on sun that sits above the tilted plane */
+.loader__sun3d {
+  grid-area: 1 / 1;
+  width: 13%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, #fff2d6 0%, #ffb84d 48%, #ff7a1a 100%);
+  box-shadow: 0 0 26px 6px rgba(255, 150, 60, 0.55), 0 0 60px 18px rgba(255, 122, 26, 0.28);
+  transform: scale(0);
+  animation: loaderIgnite 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both,
+    loaderSunPulse 2.8s ease-in-out 0.9s infinite;
+}
+
+@keyframes loaderSunPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 26px 6px rgba(255, 150, 60, 0.5), 0 0 60px 18px rgba(255, 122, 26, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 34px 9px rgba(255, 170, 80, 0.7), 0 0 80px 26px rgba(255, 122, 26, 0.35);
+  }
+}
+
+/* orbit rings trace themselves (pathLength=1 → radius-independent dash) */
+.loader__ring {
   fill: none;
-  stroke: #6fe3ff;
-  stroke-width: 1;
-  stroke-opacity: 0.5;
-  stroke-dasharray: 440;
-  stroke-dashoffset: 440;
-  animation: loaderTrace 0.7s cubic-bezier(0.65, 0, 0.35, 1) 0.05s forwards;
+  stroke: var(--c, #6fe3ff);
+  stroke-width: 0.8;
+  stroke-opacity: 0.32;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: loaderTrace 0.85s cubic-bezier(0.65, 0, 0.35, 1) var(--d, 0s) forwards;
 }
 
 @keyframes loaderTrace {
   to {
     stroke-dashoffset: 0;
   }
-}
-
-/* sun ignites */
-.loader__sun {
-  fill: url(#sunGrad);
-  transform-origin: 100px 100px;
-  transform: scale(0);
-  animation: loaderIgnite 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0s both;
-}
-
-.loader__sun-halo {
-  fill: #ff7a1a;
-  opacity: 0;
-  transform-origin: 100px 100px;
-  animation: loaderHalo 2.6s ease-in-out 0.9s infinite;
 }
 
 @keyframes loaderIgnite {
@@ -86,29 +119,17 @@
   }
 }
 
-@keyframes loaderHalo {
-  0%,
-  100% {
-    opacity: 0.12;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.22;
-    transform: scale(1.25);
-  }
-}
-
-/* planet rides the lane after the ring is drawn */
-.loader__orbit {
+/* planets ride their lanes after the rings are drawn; each drifts at its own
+   rate, the negative delay staggering their starting angles */
+.loader__o {
   transform-origin: 100px 100px;
   opacity: 0;
-  animation: loaderPlanetIn 0.3s ease 0.6s forwards,
-    loaderSpin 3.4s linear 0.6s infinite;
+  animation: loaderPlanetIn 0.4s ease 0.5s forwards,
+    loaderSpin var(--dur, 10s) linear var(--delay, 0s) infinite;
 }
 
-.loader__planet {
-  fill: #cfe0ff;
-  filter: drop-shadow(0 0 6px rgba(111, 227, 255, 0.85));
+.loader__p {
+  filter: drop-shadow(0 0 4px var(--c, #6fe3ff));
 }
 
 @keyframes loaderPlanetIn {
@@ -167,6 +188,57 @@
   animation: loaderName 0.5s ease 0.35s both;
 }
 
+/* Enter button — appears once the scene is ready */
+.loader__enter-btn {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #07212a;
+  cursor: pointer;
+  padding: 12px 34px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #a6f0ff, #6fe3ff);
+  box-shadow: 0 8px 30px -6px rgba(111, 227, 255, 0.7), 0 0 0 1px rgba(166, 240, 255, 0.5) inset;
+  animation: loaderEnterIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both,
+    loaderEnterPulse 2s ease-in-out 0.5s infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.loader__enter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 44px -6px rgba(111, 227, 255, 0.85);
+}
+
+.loader__enter-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+@keyframes loaderEnterIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes loaderEnterPulse {
+  0%,
+  100% {
+    box-shadow: 0 8px 30px -6px rgba(111, 227, 255, 0.55),
+      0 0 0 1px rgba(166, 240, 255, 0.5) inset;
+  }
+  50% {
+    box-shadow: 0 8px 38px -4px rgba(111, 227, 255, 0.9),
+      0 0 0 1px rgba(166, 240, 255, 0.6) inset;
+  }
+}
+
 .loader__dots {
   display: inline-flex;
   gap: 4px;
@@ -201,18 +273,25 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .loader__orbit-ring {
+  .loader__ring {
     stroke-dashoffset: 0;
     animation: none;
   }
-  .loader__sun,
-  .loader__orbit,
+  .loader__plane {
+    animation: none;
+    opacity: 1;
+  }
+  .loader__sun3d {
+    animation: none;
+    transform: scale(1);
+  }
+  .loader__o,
   .loader__name,
   .loader__label,
+  .loader__enter-btn,
   .loader__stars {
     animation: none;
     opacity: 1;
-    transform: none;
     filter: none;
   }
 }

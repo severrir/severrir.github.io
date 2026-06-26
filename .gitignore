@@ -12,6 +12,11 @@ preview.log
 # local dev/test scratch (not part of the site)
 _shots.mjs
 _soak.mjs
+_*.mjs
 preview_soak.log
 shots/
 shots2/
+screenshots/
+
+# loose screenshots dropped in the project root
+Screenshot*.png

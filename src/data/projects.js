@@ -27,7 +27,7 @@ export const projects = [
       size: 1.15,
       moon: true,
     },
-    orbit: { radius: 9, speed: 0.16, tilt: 0.05, angle: 0.2 },
+    orbit: { radius: 12, speed: 0.16, tilt: 0.05, angle: 0.2 },
   },
   {
     id: "combat",
@@ -50,7 +50,7 @@ export const projects = [
       size: 1.05,
       trail: true,
     },
-    orbit: { radius: 13, speed: 0.125, tilt: -0.08, angle: 1.7 },
+    orbit: { radius: 16.5, speed: 0.125, tilt: -0.08, angle: 1.7 },
   },
   {
     id: "simulator",
@@ -73,7 +73,7 @@ export const projects = [
       size: 1.5,
       rings: true,
     },
-    orbit: { radius: 17.5, speed: 0.1, tilt: 0.12, angle: 3.1 },
+    orbit: { radius: 21, speed: 0.1, tilt: 0.12, angle: 3.1 },
   },
   {
     id: "brainrot",
@@ -94,7 +94,7 @@ export const projects = [
       rimPower: 2.4,
       size: 0.95,
     },
-    orbit: { radius: 21.5, speed: 0.085, tilt: -0.14, angle: 4.4 },
+    orbit: { radius: 25.5, speed: 0.085, tilt: -0.14, angle: 4.4 },
   },
   {
     id: "penguins",
@@ -115,8 +115,9 @@ export const projects = [
       rimStrength: 0.75,
       rimPower: 2.2,
       size: 1.05,
+      moon: true,
     },
-    orbit: { radius: 26, speed: 0.07, tilt: 0.09, angle: 5.6 },
+    orbit: { radius: 29, speed: 0.07, tilt: 0.09, angle: 5.6 },
   },
   {
     id: "ai-chatbot",
@@ -139,7 +140,7 @@ export const projects = [
       size: 1.2,
       trail: true,
     },
-    orbit: { radius: 30.5, speed: 0.058, tilt: -0.06, angle: 0.9 },
+    orbit: { radius: 32.5, speed: 0.058, tilt: -0.06, angle: 0.9 },
   },
 ];
 
@@ -162,6 +163,7 @@ export const about = {
 };
 
 export const links = {
-  github: "https://github.com/severrir",
-  youtube: "https://www.youtube.com/@severrir",
+  github: "https://github.com/smarferi",
+  youtube: "https://www.youtube.com/@smarferioupi5951",
+  discord: "severrir",
 };

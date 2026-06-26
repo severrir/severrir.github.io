@@ -22,7 +22,7 @@ export default function Orbits({ projects }) {
           <lineBasicMaterial
             color={r.color}
             transparent
-            opacity={0.18}
+            opacity={0.34}
             blending={THREE.AdditiveBlending}
             depthWrite={false}
           />

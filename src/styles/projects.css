@@ -1,5 +1,6 @@
 .card {
   position: fixed;
+  z-index: 40;
   top: 92px;
   right: clamp(16px, 4vw, 48px);
   width: min(560px, calc(100vw - 32px));
@@ -28,17 +29,40 @@
   transform: scale(1);
 }
 
+/* glowing accent hairline along the top edge, in the project's colour */
+.card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--accent) 85%, transparent),
+    transparent
+  );
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 60%, transparent);
+  pointer-events: none;
+}
+
 /* ---- 3D stage with the spinning mini planet ---- */
 .card__stage {
   position: relative;
-  height: 188px;
+  height: 138px;
   flex: 0 0 auto;
-  background: radial-gradient(120% 120% at 50% 20%, rgba(var(--accent-rgb), 0.06), transparent 70%);
+  overflow: hidden;
+  background:
+    radial-gradient(80% 130% at 50% 52%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+    radial-gradient(120% 120% at 50% 0%, rgba(13, 15, 24, 0), rgba(13, 15, 24, 0.6) 100%);
   border-bottom: 1px solid var(--space-border);
 }
 
 .card__stage canvas {
   display: block;
+  position: relative;
+  z-index: 1;
 }
 
 .card__stage-fade {
@@ -89,12 +113,94 @@
   overflow-y: auto;
 }
 
+.card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .card__blurb {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--space-muted);
+}
+
+.card__sys {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 80%, white 10%);
+  white-space: nowrap;
+}
+.card__sys-sep {
+  opacity: 0.6;
+}
+
+/* ---- in-card demo video lightbox (portaled to body) ---- */
+.card__video {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 5vw, 64px);
+  background: rgba(3, 4, 8, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: cardVideoIn 0.3s ease;
+}
+
+@keyframes cardVideoIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.card__video-frame {
+  position: relative;
+  width: min(1100px, 100%);
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.7),
+    0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.card__video-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.card__video-close {
+  position: absolute;
+  top: -46px;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(13, 15, 24, 0.7);
+  border: 1px solid var(--space-border);
+  color: var(--space-text);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.25s ease;
+}
+
+.card__video-close:hover {
+  border-color: var(--accent);
+  transform: rotate(90deg);
 }
 
 .card__title {
@@ -111,6 +217,16 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 18px;
+}
+
+/* tags adopt the project's signature colour inside its card */
+.card__tags .tag-chip {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--space-border));
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+.card__tags .tag-chip:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  color: color-mix(in srgb, var(--accent) 75%, white 25%);
 }
 
 .card__desc {
@@ -196,6 +312,6 @@
     padding-bottom: calc(24px + env(safe-area-inset-bottom));
   }
   .card__stage {
-    height: 150px;
+    height: 128px;
   }
 }

@@ -1,10 +1,18 @@
+import { motion, useScroll } from "framer-motion";
 import { links } from "@/data/projects.js";
 import { GithubIcon, YoutubeIcon } from "@/ui/icons.jsx";
+import SoundToggle from "@/ui/SoundToggle.jsx";
 import "@/styles/nav.css";
 
 export default function Nav({ onHome, onJump }) {
+  const { scrollYProgress } = useScroll();
   return (
     <header className="nav">
+      <motion.span
+        className="nav__progress"
+        style={{ scaleX: scrollYProgress }}
+        aria-hidden="true"
+      />
       <button className="nav__brand" onClick={onHome} aria-label="SEVERRIR — back to overview">
         <span className="nav__brand-dot" aria-hidden="true" />
         SEVERRIR
@@ -35,6 +43,7 @@ export default function Nav({ onHome, onJump }) {
         >
           <YoutubeIcon />
         </a>
+        <SoundToggle />
       </nav>
     </header>
   );

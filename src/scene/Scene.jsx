@@ -1,19 +1,70 @@
-import { createRef, useMemo, useRef } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
+import { createRef, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls, PerformanceMonitor } from "@react-three/drei";
+import { EffectComposer, Bloom, Vignette, ChromaticAberration } from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
 
 import Starfield from "@/scene/Starfield.jsx";
 import Sun from "@/scene/Sun.jsx";
 import Planet from "@/scene/Planet.jsx";
 import Orbits from "@/scene/Orbits.jsx";
+import AsteroidBelt from "@/scene/AsteroidBelt.jsx";
+import CardBurst from "@/scene/CardBurst.jsx";
+import ShootingStars from "@/scene/ShootingStars.jsx";
+import Constellation from "@/scene/Constellation.jsx";
 import CameraRig from "@/scene/CameraRig.jsx";
+import { camShake } from "@/scene/sceneEnv.js";
 import { projects } from "@/data/projects.js";
 
-export default function Scene({ activeIndex, onSelect, onReady, hintActive, hintIntense, onInteract, interactive }) {
+// Applies the global shake impulse to the camera each frame, decaying fast.
+// Runs last so it offsets whatever the rig / OrbitControls just set.
+function CameraShake() {
+  const { camera } = useThree();
+  useFrame((_, delta) => {
+    if (camShake.amp <= 0.0015) return;
+    const a = camShake.amp;
+    camera.position.x += (Math.random() - 0.5) * a;
+    camera.position.y += (Math.random() - 0.5) * a;
+    camera.position.z += (Math.random() - 0.5) * a * 0.5;
+    camShake.amp *= Math.exp(-6 * delta);
+  });
+  return null;
+}
+
+// Eases bloom up a touch while a planet is focused, for a cinematic "arrival"
+// pop, then back down — fully owned per-frame so React re-renders can't reset it.
+function BloomController({ bloomRef, activeIndex, base }) {
+  useFrame(() => {
+    const b = bloomRef.current;
+    if (!b) return;
+    const target = activeIndex !== null ? base * 1.4 : base;
+    b.intensity += (target - b.intensity) * 0.06;
+  });
+  return null;
+}
+
+// Washes the fog/background a touch toward the focused project's colour, so each
+// project "owns" the scene while its card is open. Stays subtle (mostly void).
+const VOID = new THREE.Color("#05060a");
+const RIMS = projects.map((p) => new THREE.Color(p.visual.rimColor));
+function FogWash({ activeIndex }) {
+  const { scene } = useThree();
+  const target = useMemo(() => new THREE.Color(), []);
+  useFrame(() => {
+    target.copy(VOID);
+    if (activeIndex !== null) target.lerp(RIMS[activeIndex], 0.16);
+    if (scene.fog) scene.fog.color.lerp(target, 0.05);
+    if (scene.background?.isColor) scene.background.lerp(target, 0.05);
+  });
+  return null;
+}
+
+export default function Scene({ activeIndex, onSelect, onReady, onInteract, interactive, playIntro }) {
   const controlsRef = useRef();
   const anchorRefs = useRef(projects.map(() => createRef()));
+  const bloomRef = useRef();
+  const aberration = useMemo(() => new THREE.Vector2(0.00028, 0.0004), []);
 
   // Degrade gracefully on small screens / weak GPUs.
   const isMobile = useMemo(
@@ -21,6 +72,11 @@ export default function Scene({ activeIndex, onSelect, onReady, hintActive, hint
     []
   );
   const starCount = isMobile ? 700 : 1800;
+  const baseBloom = isMobile ? 0.7 : 0.85;
+
+  // Adaptive resolution: drop the pixel ratio if the GPU can't keep up, so weak
+  // devices stay smooth instead of dropping frames at full res.
+  const [dpr, setDpr] = useState(isMobile ? 1.25 : 1.75);
 
   return (
     <Canvas
@@ -29,12 +85,20 @@ export default function Scene({ activeIndex, onSelect, onReady, hintActive, hint
       // which beats the .scene-canvas class and collapses the canvas to a thin
       // strip. Override inline so the scene is a true full-viewport background.
       style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh" }}
-      // Cap pixel ratio so 4K/retina displays don't render at 2x and tank the
-      // GPU. 1.75 is visually crisp but far cheaper than an uncapped 2–3x.
-      dpr={isMobile ? [1, 1.25] : [1, 1.75]}
+      // Pixel ratio is driven adaptively (see PerformanceMonitor below): crisp
+      // when the GPU can afford it, lower when it can't.
+      dpr={dpr}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       // Start at the Beat 1 wide shot so there's no jump when the loader fades.
-      camera={{ position: [0, 26, 92], fov: 50, near: 0.1, far: 600 }}
+      // Keep in sync with STAGE(_MOBILE).wide.pos in cameraStages.js. Phones use
+      // a wider FOV + a much further dolly so the flat, wide system fits a
+      // portrait frame instead of cropping to a giant sun.
+      camera={{
+        position: isMobile ? [-3, 47, 172] : [-3, 34, 112],
+        fov: isMobile ? 72 : 50,
+        near: 0.1,
+        far: 700,
+      }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.05;
@@ -53,14 +117,26 @@ export default function Scene({ activeIndex, onSelect, onReady, hintActive, hint
       }}
     >
       <color attach="background" args={["#05060a"]} />
-      <fog attach="fog" args={["#05060a", 80, 290]} />
+      {/* Phones dolly much further back, so push fog out to match or the whole
+          system would sit inside the fog and wash to the background colour. */}
+      <fog attach="fog" args={isMobile ? ["#05060a", 150, 470] : ["#05060a", 80, 290]} />
 
       <ambientLight intensity={0.18} color="#aab4d6" />
       <hemisphereLight args={["#3a3550", "#05060a", 0.32]} />
 
+      <PerformanceMonitor
+        onDecline={() => setDpr((d) => Math.max(isMobile ? 0.85 : 1, d - 0.25))}
+        onIncline={() => setDpr((d) => Math.min(isMobile ? 1.25 : 1.75, d + 0.25))}
+      />
+
       <Starfield count={starCount} />
-      <Sun />
+      <ShootingStars />
+      <Sun interactive={interactive} />
       <Orbits projects={projects} />
+      <AsteroidBelt radius={18.7} count={isMobile ? 130 : 320} />
+      <Constellation anchorRefs={anchorRefs} interactive={interactive} />
+      <CardBurst anchorRefs={anchorRefs} activeIndex={activeIndex} />
+      <FogWash activeIndex={activeIndex} />
 
       {projects.map((project, i) => (
         <Planet
@@ -70,8 +146,6 @@ export default function Scene({ activeIndex, onSelect, onReady, hintActive, hint
           anchorRef={anchorRefs.current[i]}
           active={activeIndex === i}
           dimmed={activeIndex !== null && activeIndex !== i}
-          hint={hintActive && i === 0}
-          hintIntense={hintIntense}
           onSelect={onSelect}
           interactive={interactive}
         />
@@ -85,7 +159,7 @@ export default function Scene({ activeIndex, onSelect, onReady, hintActive, hint
         rotateSpeed={0.55}
         zoomSpeed={0.7}
         minDistance={10}
-        maxDistance={90}
+        maxDistance={isMobile ? 190 : 90}
         maxPolarAngle={Math.PI * 0.85}
         minPolarAngle={Math.PI * 0.12}
         onStart={onInteract}
@@ -96,15 +170,29 @@ export default function Scene({ activeIndex, onSelect, onReady, hintActive, hint
         anchorRefs={anchorRefs}
         activeIndex={activeIndex}
         projects={projects}
+        playIntro={playIntro}
       />
 
+      <BloomController bloomRef={bloomRef} activeIndex={activeIndex} base={baseBloom} />
+      <CameraShake />
+
       <EffectComposer disableNormalPass multisampling={isMobile ? 0 : 2}>
+        {/* Conservative bloom: a high luminance threshold means only the very
+            brightest pixels (the sun core) bloom, so the additive nebula, stars
+            and planet rims never push the whole frame to white on real GPUs. */}
         <Bloom
-          intensity={isMobile ? 0.9 : 1.3}
-          luminanceThreshold={0.5}
-          luminanceSmoothing={0.9}
+          ref={bloomRef}
+          intensity={baseBloom}
+          luminanceThreshold={0.78}
+          luminanceSmoothing={0.5}
           mipmapBlur
-          radius={0.8}
+          radius={0.6}
+        />
+        <ChromaticAberration
+          blendFunction={BlendFunction.NORMAL}
+          offset={aberration}
+          radialModulation
+          modulationOffset={0.4}
         />
         <Vignette eskil={false} offset={0.22} darkness={0.78} />
       </EffectComposer>

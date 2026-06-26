@@ -34,6 +34,7 @@ export default function NameBeat({ visible, onNext }) {
               key={i}
               className="beat-name__char"
               aria-hidden="true"
+              style={{ "--i": i }}
               initial={{ opacity: 0, y: 30, filter: "blur(14px)" }}
               animate={visible ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
               transition={{ duration: 0.85, delay: 0.3 + i * 0.06, ease: EASE }}

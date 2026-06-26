@@ -1,0 +1,137 @@
+.hud {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* very faint scanlines for CRT/mission-control texture */
+.hud__scanlines {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0) 2px,
+    rgba(120, 200, 255, 0.025) 3px,
+    rgba(255, 255, 255, 0) 4px
+  );
+  mix-blend-mode: screen;
+}
+
+/* corner brackets */
+.hud__corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid rgba(var(--accent-rgb), 0.5);
+  opacity: 0.7;
+}
+.hud__corner--tl {
+  top: 16px;
+  left: 16px;
+  border-right: none;
+  border-bottom: none;
+}
+.hud__corner--tr {
+  top: 16px;
+  right: 16px;
+  border-left: none;
+  border-bottom: none;
+}
+.hud__corner--bl {
+  bottom: 16px;
+  left: 16px;
+  border-right: none;
+  border-top: none;
+}
+.hud__corner--br {
+  bottom: 16px;
+  right: 16px;
+  border-left: none;
+  border-top: none;
+}
+
+/* status lines */
+.hud__status {
+  position: absolute;
+  bottom: 22px;
+  left: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(174, 182, 200, 0.7);
+}
+.hud__status--right {
+  left: auto;
+  right: 48px;
+  color: rgba(var(--accent-rgb), 0.6);
+}
+.hud__sep {
+  color: rgba(var(--accent-rgb), 0.7);
+}
+.hud__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-glow);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.9);
+  animation: hudBlink 2.4s steps(1) infinite;
+}
+@keyframes hudBlink {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  61%,
+  100% {
+    opacity: 0.25;
+  }
+}
+
+/* cinematic letterbox bars */
+.hud__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  background: #000;
+  /* slow, eased glide so the bars feel cinematic both arriving on entry and
+     receding on the first scroll — no snap */
+  transition: height 1.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hud__bar--top {
+  top: 0;
+}
+.hud__bar--bottom {
+  bottom: 0;
+}
+.hud__bars.is-on .hud__bar {
+  height: 7vh;
+}
+
+@media (max-width: 640px) {
+  /* the status lines crowd the scroll cue on narrow screens — drop them and
+     keep just the corner brackets + scanlines for the HUD feel */
+  .hud__status {
+    display: none;
+  }
+  .hud__corner {
+    width: 16px;
+    height: 16px;
+  }
+  .hud__bars.is-on .hud__bar {
+    height: 5vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud__dot {
+    animation: none;
+  }
+}

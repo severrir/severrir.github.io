@@ -16,7 +16,9 @@ export default function SystemBeat({ onNext }) {
     <section ref={ref} id="beat-system" className="beat beat--system" aria-label="The work">
       <motion.div className="beat-system__head" style={{ opacity }}>
         <span className="section-eyebrow">The Work</span>
-        <p className="beat-system__hint">Six systems in orbit — click a planet to fly in.</p>
+        <p className="beat-system__hint">
+          Each planet is a project — click one to fly in.
+        </p>
       </motion.div>
 
       <ScrollCue label="More" onClick={onNext} />

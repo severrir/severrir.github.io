@@ -103,72 +103,9 @@
   }
 }
 
-/* ── Planet sonar-ping rings ───────────────────────────────────────────── */
-
-/* Wrapper: 0×0 so drei's `center` prop still anchors rings at the planet */
-.planet-hint-rings {
-  position: relative;
-  width: 0;
-  height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.planet-hint-ring {
-  position: absolute;
-  width: 220px;
-  height: 220px;
-  margin: -110px 0 0 -110px; /* center on the 0×0 anchor */
-  border-radius: 50%;
-  border: 5px solid rgba(111, 227, 220, 1);
-  box-shadow:
-    0 0 50px rgba(111, 227, 220, 0.85),
-    0 0 100px rgba(111, 227, 220, 0.4),
-    inset 0 0 36px rgba(111, 227, 220, 0.55);
-  pointer-events: none;
-  animation: planetHintRing 2s ease-out infinite;
-}
-
-/* Second ring fires 1 s later — creates the sonar double-ping */
-.planet-hint-ring--echo {
-  animation-delay: 1s;
-}
-
-.planet-hint-ring.is-intense {
-  border-color: rgba(222, 242, 241, 1);
-  box-shadow:
-    0 0 70px rgba(111, 227, 220, 1),
-    0 0 140px rgba(111, 227, 220, 0.6),
-    inset 0 0 50px rgba(111, 227, 220, 0.7);
-  animation: planetHintRing 1.15s ease-out infinite;
-}
-
-.planet-hint-ring--echo.is-intense {
-  animation-delay: 0.58s;
-}
-
-@keyframes planetHintRing {
-  0% {
-    transform: scale(0.85);
-    opacity: 1;
-    border-width: 5px;
-  }
-  65% {
-    opacity: 0.6;
-    border-width: 2px;
-  }
-  100% {
-    transform: scale(2.2);
-    opacity: 0;
-    border-width: 1px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .onboard-hint,
-  .onboard-hint__pulse,
-  .planet-hint-ring {
+  .onboard-hint__pulse {
     animation: none;
   }
 }
@@ -181,10 +118,5 @@
     max-width: 88vw;
     text-align: center;
     gap: 10px;
-  }
-  .planet-hint-ring {
-    width: 160px;
-    height: 160px;
-    margin: -80px 0 0 -80px;
   }
 }

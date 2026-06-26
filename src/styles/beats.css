@@ -27,24 +27,26 @@
 .beat-name__inner::before {
   content: "";
   position: absolute;
-  inset: -80px -120px;
+  inset: -110px -160px;
   z-index: -1;
   background: radial-gradient(
-    60% 64% at 50% 46%,
-    rgba(var(--void-rgb), 0.6) 0%,
-    rgba(var(--void-rgb), 0.22) 50%,
-    transparent 74%
+    64% 70% at 50% 48%,
+    rgba(var(--void-rgb), 0.82) 0%,
+    rgba(var(--void-rgb), 0.5) 46%,
+    rgba(var(--void-rgb), 0.16) 68%,
+    transparent 82%
   );
   pointer-events: none;
 }
 
 .beat-name__eyebrow {
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: clamp(11px, 1.3vw, 13px);
-  letter-spacing: 0.4em;
+  font-size: clamp(12px, 1.3vw, 15px);
+  font-weight: 500;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
   color: var(--accent);
-  padding-left: 0.4em;
+  padding-left: 0.26em;
 }
 
 .beat-name__title {
@@ -61,12 +63,44 @@
 
 .beat-name__char {
   display: inline-block;
-  background: linear-gradient(180deg, #ffffff 0%, #cfd6e6 100%);
+  /* Intentional directional sheen + a brighter highlight band that sweeps
+     across the letters (per-char delay → left-to-right shimmer). */
+  background: linear-gradient(
+    100deg,
+    #c4d2e8 0%,
+    #e6eefc 30%,
+    #ffffff 46%,
+    #eafaff 52%,
+    #e6eefc 64%,
+    #c4d2e8 100%
+  );
+  background-size: 280% 100%;
+  background-position: 100% 0;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   text-shadow: 0 0 70px rgba(var(--accent-rgb), 0.35);
   will-change: transform, opacity, filter;
+  animation: nameSheen 7s ease-in-out infinite;
+  animation-delay: calc(2s + var(--i, 0) * 0.07s);
+}
+
+@keyframes nameSheen {
+  0%,
+  18% {
+    background-position: 100% 0;
+  }
+  40%,
+  100% {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beat-name__char {
+    animation: none;
+    background-position: 30% 0;
+  }
 }
 
 .beat-name__char:empty {
@@ -75,9 +109,9 @@
 
 .beat-name__tagline {
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: clamp(11px, 1.4vw, 14px);
-  letter-spacing: 0.18em;
-  color: var(--space-muted);
+  font-size: clamp(12px, 1.4vw, 15px);
+  letter-spacing: 0.14em;
+  color: #c3c9d8;
   margin: 0;
 }
 
@@ -149,8 +183,8 @@
 }
 
 .beat-system__hint {
-  font-size: 14px;
-  color: var(--space-muted);
+  font-size: 15px;
+  color: #c3c9d8;
   margin: 0;
 }
 
@@ -165,10 +199,10 @@
   border: none;
   cursor: pointer;
   pointer-events: auto;
-  color: var(--space-muted);
+  color: #aeb6c8;
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.24em;
+  font-size: 11px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   transition: color 0.25s ease;
 }

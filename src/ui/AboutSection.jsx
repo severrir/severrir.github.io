@@ -14,6 +14,10 @@ export default function AboutSection() {
         viewport={{ once: true, amount: 0.3 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
+        <span className="panel-bracket panel-bracket--tl" aria-hidden="true" />
+        <span className="panel-bracket panel-bracket--tr" aria-hidden="true" />
+        <span className="panel-bracket panel-bracket--bl" aria-hidden="true" />
+        <span className="panel-bracket panel-bracket--br" aria-hidden="true" />
         <span className="section-eyebrow">The Stack</span>
         <h2 className="about-section__title">What I reach for, day to day.</h2>
         <p className="about-section__bio">
