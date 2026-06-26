@@ -10,6 +10,13 @@ const HeroPlanet = lazy(() => import("@/ui/HeroPlanet.jsx"));
 const NAME = "SEVERRIR";
 const EASE = [0.22, 1, 0.36, 1];
 
+// Each CTA button rises + settles with a whisper of scale — subtle enough to
+// read as "arriving", not bouncing. Shared by both buttons so they match.
+const CTA_ITEM = {
+  hidden: { opacity: 0, y: 18, scale: 0.97 },
+  show: { opacity: 1, y: 0, scale: 1 },
+};
+
 // Beat 1 — name + the standout "Book a Consultation" CTA, overlaid on the wide
 // cinematic shot of the system. The wordmark sits just left of centre to make
 // room for a small interactive planet on the right; both parallax and fade as
@@ -72,25 +79,43 @@ export default function NameBeat({ visible, onNext, onBook }) {
 
         <motion.p
           className="beat-name__tagline"
-          initial={{ opacity: 0 }}
-          animate={visible ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: 1, delay: visible ? 1 : 0, ease: EASE }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={visible ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+          transition={{ duration: 0.9, delay: visible ? 0.95 : 0, ease: EASE }}
         >
           Luau · modular game systems · anticheat · combat · NPC AI
         </motion.p>
 
+        {/* CTAs arrive last and stagger in one after the other — a small
+            orchestrated beat that draws the eye to the primary action without
+            scattering motion across the hero. */}
         <motion.div
           className="beat-name__cta"
-          initial={{ opacity: 0, y: 14 }}
-          animate={visible ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
-          transition={{ duration: 0.8, delay: visible ? 1.15 : 0, ease: EASE }}
+          initial="hidden"
+          animate={visible ? "show" : "hidden"}
+          variants={{
+            hidden: {},
+            show: { transition: { staggerChildren: 0.12, delayChildren: 1.15 } },
+          }}
         >
-          <button className="btn btn-primary" type="button" onClick={book}>
+          <motion.button
+            className="btn btn-primary"
+            type="button"
+            onClick={book}
+            variants={CTA_ITEM}
+            transition={{ duration: 0.65, ease: EASE }}
+          >
             Book a Consultation
-          </button>
-          <button className="btn btn-ghost" type="button" onClick={onNext}>
+          </motion.button>
+          <motion.button
+            className="btn btn-ghost"
+            type="button"
+            onClick={onNext}
+            variants={CTA_ITEM}
+            transition={{ duration: 0.65, ease: EASE }}
+          >
             Explore the work
-          </button>
+          </motion.button>
         </motion.div>
       </motion.div>
 

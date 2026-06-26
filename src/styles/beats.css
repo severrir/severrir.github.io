@@ -58,8 +58,11 @@
   width: 400px;
   height: 400px;
   cursor: pointer;
-  /* entrance fade-in without scale transform (which can cause sizing race conditions) */
-  animation: heroPlanetIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Entrance: drift in from the right + fade. Translate ONLY — never scale: a
+     scale transform changes the canvas's measured size mid-animation, which is
+     what caused the old sizing non-determinism. Translate leaves clientWidth/
+     Height untouched, so the planet still renders at one fixed size every load. */
+  animation: heroPlanetIn 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Keep the hero planet from crowding the wordmark or nav on mid-size screens —
@@ -72,9 +75,9 @@
 }
 
 @keyframes heroPlanetIn {
-  0% { opacity: 0; }
-  60% { opacity: 1; }
-  100% { opacity: 1; }
+  0% { opacity: 0; transform: translate3d(40px, 0, 0); }
+  55% { opacity: 1; }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 .hero-planet__halo {
