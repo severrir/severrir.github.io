@@ -141,13 +141,19 @@ body {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: var(--space-muted);
-  padding: 5px 10px;
-  border: 1px solid var(--space-border);
+  color: #d3dae8;
+  padding: 6px 12px;
+  border: 1px solid rgba(var(--accent-rgb), 0.25);
   border-radius: 999px;
-  background: rgba(var(--accent-rgb), 0.05);
+  background: rgba(var(--accent-rgb), 0.08);
   white-space: nowrap;
   transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.tag-chip:hover {
+  color: var(--accent-glow);
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.12);
 }
 
 .tag-chip:hover {
