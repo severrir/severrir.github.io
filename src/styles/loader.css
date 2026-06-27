@@ -90,6 +90,45 @@
   }
 }
 
+/* Soft corona breathing behind the sun — cinematic depth without touching the
+   sun's own ignite/pulse. The sun's transform makes it the containing block, so
+   this sits centred on it. */
+.loader__sun3d::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 460%;
+  height: 460%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 160, 70, 0.22) 0%,
+    rgba(255, 122, 26, 0.08) 38%,
+    transparent 68%
+  );
+  pointer-events: none;
+  z-index: -1;
+  animation: loaderCorona 3.6s ease-in-out 0.9s infinite;
+}
+
+@keyframes loaderCorona {
+  0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.14); }
+}
+
+/* Cinematic vignette over the whole loader — pulls focus to the centre system
+   and gives the deep-space feel real depth at the edges. */
+.loader::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(120% 90% at 50% 46%, transparent 42%, rgba(3, 4, 8, 0.55) 100%);
+}
+
 /* orbit rings trace themselves (pathLength=1 → radius-independent dash) */
 .loader__ring {
   fill: none;
@@ -190,6 +229,7 @@
 
 /* Enter button — appears once the scene is ready */
 .loader__enter-btn {
+  position: relative;
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 13px;
   font-weight: 500;
@@ -205,6 +245,29 @@
   animation: loaderEnterIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both,
     loaderEnterPulse 2s ease-in-out 0.5s infinite;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* expanding beacon ring — a calm "ready, click here" pulse radiating outward */
+.loader__enter-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(166, 240, 255, 0.7);
+  pointer-events: none;
+  animation: loaderEnterRing 2.4s cubic-bezier(0.4, 0, 0.6, 1) 0.6s infinite;
+}
+
+@keyframes loaderEnterRing {
+  0% { opacity: 0.7; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.45); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader__enter-btn::after,
+  .loader__sun3d::after {
+    animation: none;
+  }
 }
 
 .loader__enter-btn:hover {
