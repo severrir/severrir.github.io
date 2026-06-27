@@ -48,6 +48,15 @@ export default function NameBeat({ visible, onNext, onBook }) {
   return (
     <section ref={ref} id="beat-name" className="beat beat--name" aria-label="Intro">
       <motion.div className="beat-name__inner" style={{ opacity, y, scale }}>
+        {/* One-time light bloom that swells from behind the wordmark as the hero
+            "powers on" — marks the arrival, then fades. Purely decorative. */}
+        <motion.div
+          className="beat-name__bloom"
+          aria-hidden="true"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={visible ? { opacity: [0, 0.85, 0], scale: [0.5, 1.35, 1.9] } : { opacity: 0 }}
+          transition={{ duration: 2.4, delay: visible ? 0.2 : 0, ease: "easeOut", times: [0, 0.32, 1] }}
+        />
         <motion.span
           className="beat-name__eyebrow"
           initial={{ opacity: 0, y: 12 }}
@@ -67,10 +76,25 @@ export default function NameBeat({ visible, onNext, onBook }) {
               initial={{ opacity: 0, y: 44, filter: "blur(18px)" }}
               animate={
                 visible
-                  ? { opacity: 1, y: 0, filter: "blur(0px)" }
+                  ? {
+                      opacity: 1,
+                      y: 0,
+                      filter: "blur(0px)",
+                      // each letter flares with a cyan glow as it lands, then
+                      // settles to its quiet ambient shadow — letters "igniting"
+                      textShadow: [
+                        "0 0 48px rgba(111, 227, 255, 0.85)",
+                        "0 0 70px rgba(111, 227, 255, 0.32)",
+                      ],
+                    }
                   : { opacity: 0, y: 44, filter: "blur(18px)" }
               }
-              transition={{ duration: 0.95, delay: visible ? 0.25 + i * 0.085 : 0, ease: EASE }}
+              transition={{
+                duration: 0.95,
+                delay: visible ? 0.25 + i * 0.085 : 0,
+                ease: EASE,
+                textShadow: { duration: 1.1, times: [0.4, 1] },
+              }}
             >
               {ch}
             </motion.span>
