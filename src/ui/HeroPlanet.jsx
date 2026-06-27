@@ -193,6 +193,10 @@ function SaturnMesh({ hovered, pressedAt }) {
 export default function HeroPlanet() {
   const [hovered, setHovered] = useState(false);
   const [ready, setReady] = useState(false);
+  // The entrance fade only starts once the canvas is created AND its shader is
+  // compiled (see onCreated). Starting the fade before that let a mid-animation
+  // shader compile stutter the drift-in — the "not smooth" planet entrance.
+  const [revealed, setRevealed] = useState(false);
   const pressedAt = useRef(-10);
   const containerRef = useRef();
 
@@ -221,7 +225,7 @@ export default function HeroPlanet() {
   return (
     <div
       ref={containerRef}
-      className="hero-planet"
+      className={`hero-planet ${revealed ? "is-revealed" : ""}`}
       onPointerEnter={handleEnter}
       onPointerLeave={handleLeave}
       onPointerDown={handlePress}
@@ -239,6 +243,12 @@ export default function HeroPlanet() {
           antialias: true,
           alpha: true,
           powerPreference: "low-power",
+        }}
+        onCreated={(state) => {
+          // compile the planet shader up-front so the drift-in fade isn't
+          // stuttered by a mid-animation compile, then start the entrance
+          try { state.gl.compile(state.scene, state.camera); } catch { /* no-op */ }
+          setRevealed(true);
         }}
         camera={{
           position: CAMERA_POS,

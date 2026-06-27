@@ -9,6 +9,9 @@ const HeroPlanet = lazy(() => import("@/ui/HeroPlanet.jsx"));
 
 const NAME = "SEVERRIR";
 const EASE = [0.22, 1, 0.36, 1];
+// easeOutExpo-ish: a long, smooth deceleration with no overshoot — glides
+// elements into place instead of snapping. Used across the whole entrance.
+const SMOOTH = [0.16, 1, 0.3, 1];
 
 // Each CTA button rises + settles with a whisper of scale — subtle enough to
 // read as "arriving", not bouncing. Shared by both buttons so they match.
@@ -61,7 +64,7 @@ export default function NameBeat({ visible, onNext, onBook }) {
           className="beat-name__eyebrow"
           initial={{ opacity: 0, y: 12 }}
           animate={visible ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-          transition={{ duration: 0.7, delay: visible ? 0.1 : 0, ease: EASE }}
+          transition={{ duration: 0.9, delay: visible ? 0.15 : 0, ease: SMOOTH }}
         >
           Roblox Systems Developer
         </motion.span>
@@ -73,13 +76,12 @@ export default function NameBeat({ visible, onNext, onBook }) {
               className="beat-name__char"
               aria-hidden="true"
               style={{ "--i": i }}
-              initial={{ opacity: 0, y: 44, filter: "blur(18px)" }}
+              initial={{ opacity: 0, y: 36 }}
               animate={
                 visible
                   ? {
                       opacity: 1,
                       y: 0,
-                      filter: "blur(0px)",
                       // each letter flares with a cyan glow as it lands, then
                       // settles to its quiet ambient shadow — letters "igniting"
                       textShadow: [
@@ -87,13 +89,15 @@ export default function NameBeat({ visible, onNext, onBook }) {
                         "0 0 70px rgba(111, 227, 255, 0.32)",
                       ],
                     }
-                  : { opacity: 0, y: 44, filter: "blur(18px)" }
+                  : { opacity: 0, y: 36 }
               }
               transition={{
-                duration: 0.95,
-                delay: visible ? 0.25 + i * 0.085 : 0,
-                ease: EASE,
-                textShadow: { duration: 1.1, times: [0.4, 1] },
+                // No filter blur (browsers step it — that's what made the letters
+                // look like they snapped). A clean, long rise + fade reads smooth.
+                duration: 1.15,
+                delay: visible ? 0.3 + i * 0.075 : 0,
+                ease: SMOOTH,
+                textShadow: { duration: 1.3, times: [0.45, 1] },
               }}
             >
               {ch}
@@ -103,9 +107,9 @@ export default function NameBeat({ visible, onNext, onBook }) {
 
         <motion.p
           className="beat-name__tagline"
-          initial={{ opacity: 0, y: 10 }}
-          animate={visible ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-          transition={{ duration: 0.9, delay: visible ? 0.95 : 0, ease: EASE }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={visible ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+          transition={{ duration: 1.05, delay: visible ? 1.05 : 0, ease: SMOOTH }}
         >
           Luau · modular game systems · anticheat · combat · NPC AI
         </motion.p>
@@ -119,7 +123,7 @@ export default function NameBeat({ visible, onNext, onBook }) {
           animate={visible ? "show" : "hidden"}
           variants={{
             hidden: {},
-            show: { transition: { staggerChildren: 0.12, delayChildren: 1.15 } },
+            show: { transition: { staggerChildren: 0.14, delayChildren: 1.35 } },
           }}
         >
           <motion.button
@@ -127,7 +131,7 @@ export default function NameBeat({ visible, onNext, onBook }) {
             type="button"
             onClick={book}
             variants={CTA_ITEM}
-            transition={{ duration: 0.65, ease: EASE }}
+            transition={{ duration: 0.8, ease: SMOOTH }}
           >
             Book a Consultation
           </motion.button>
@@ -136,7 +140,7 @@ export default function NameBeat({ visible, onNext, onBook }) {
             type="button"
             onClick={onNext}
             variants={CTA_ITEM}
-            transition={{ duration: 0.65, ease: EASE }}
+            transition={{ duration: 0.8, ease: SMOOTH }}
           >
             Explore the work
           </motion.button>

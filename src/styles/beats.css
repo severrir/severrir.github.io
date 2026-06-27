@@ -86,11 +86,21 @@
   width: 400px;
   height: 400px;
   cursor: pointer;
-  /* Entrance: drift in from the right + fade. Translate ONLY — never scale: a
-     scale transform changes the canvas's measured size mid-animation, which is
-     what caused the old sizing non-determinism. Translate leaves clientWidth/
-     Height untouched, so the planet still renders at one fixed size every load. */
-  animation: heroPlanetIn 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Held hidden until the canvas reports ready (HeroPlanet adds .is-revealed in
+     onCreated, after compiling the shader). Starting the fade before that let a
+     mid-animation compile stutter the drift-in. */
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+/* Entrance: a long, smooth drift in from the right + fade. Translate ONLY —
+   never scale: a scale transform changes the canvas's measured size mid-
+   animation, which caused the old sizing non-determinism. Translate leaves
+   clientWidth/Height untouched, so the planet renders one fixed size each load. */
+.hero-planet.is-revealed {
+  opacity: 1; /* resting state — guarantees visibility even if the animation
+                 fill is ever dropped; the keyframe still drives the fade */
+  animation: heroPlanetIn 2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Keep the hero planet from crowding the wordmark or nav on mid-size screens —
@@ -103,8 +113,7 @@
 }
 
 @keyframes heroPlanetIn {
-  0% { opacity: 0; transform: translate3d(40px, 0, 0); }
-  55% { opacity: 1; }
+  0% { opacity: 0; transform: translate3d(48px, 0, 0); }
   100% { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
@@ -131,8 +140,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-planet {
+  /* no drift animation — but the planet must still be visible (its base state is
+     now opacity:0, revealed by the animation), so force it shown. */
+  .hero-planet,
+  .hero-planet.is-revealed {
     animation: none;
+    opacity: 1;
   }
 }
 
