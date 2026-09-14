@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { Play } from "lucide-react";
 import { useSound } from "@/lib/useSound";
@@ -82,18 +81,34 @@ export function VideoFacade({
         aria-label={`Play the ${title} demo`}
         {...sound}
       >
-        <Image
+        {/*
+         * A plain img rather than next/image: with images.unoptimized the
+         * optimizer emits no srcset, so next/image silently drops the sizes
+         * attribute and every device — a 360px phone included — downloads the
+         * full 1280x720 maxresdefault. mqdefault and maxresdefault are both true
+         * 16:9, so they pair cleanly in a srcset; hqdefault is 4:3 and is only
+         * the fallback when maxres is missing, where object-cover crops it.
+         */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- next/image
+            emits no srcset under images.unoptimized, which is the whole reason
+            this is a plain img; see the comment above. */}
+        <img
           key={stage}
           src={`https://i.ytimg.com/vi/${youtubeId}/${
             stage === "maxres" ? "maxresdefault" : "hqdefault"
           }.jpg`}
-          alt=""
-          fill
-          unoptimized
+          srcSet={
+            stage === "maxres"
+              ? `https://i.ytimg.com/vi/${youtubeId}/mqdefault.jpg 320w, https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg 1280w`
+              : undefined
+          }
           sizes="(min-width: 1024px) 52vw, 100vw"
-          priority={priority}
+          alt=""
+          decoding="async"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
           onError={() => setStage((s) => NEXT_STAGE[s])}
-          className="object-cover opacity-70 transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.015] group-hover:opacity-90"
+          className="absolute inset-0 size-full object-cover opacity-70 transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.015] group-hover:opacity-90"
         />
         <span className="absolute inset-0 bg-gradient-to-t from-bg/80 via-bg/10 to-transparent" />
         <span className="absolute bottom-4 left-4 inline-flex items-center gap-2.5 rounded-md border border-rule-strong bg-bg/70 px-3.5 py-2 text-sm font-semibold text-text backdrop-blur-sm transition-colors duration-200 group-hover:border-edge-gold-strong group-hover:text-text">

@@ -42,11 +42,16 @@ export function initAudio() {
 
   const arm = () => {
     armed = true;
-    window.removeEventListener("pointerdown", arm);
-    window.removeEventListener("keydown", arm);
+    window.removeEventListener("pointerdown", arm, { capture: true });
+    window.removeEventListener("keydown", arm, { capture: true });
   };
-  window.addEventListener("pointerdown", arm, { once: true });
-  window.addEventListener("keydown", arm, { once: true });
+  /*
+   * Capture phase, so arming beats React's delegated handlers. On the bubble
+   * phase a component's own onPointerDown ran first and playSound bailed on
+   * !armed, which made the very first click on the page silent every time.
+   */
+  window.addEventListener("pointerdown", arm, { once: true, capture: true });
+  window.addEventListener("keydown", arm, { once: true, capture: true });
 }
 
 function getHowl(name: SoundName): Howl {

@@ -17,14 +17,14 @@ export function AmbientHero() {
   const step = (i: number) => (reduced ? {} : rise(i));
 
   return (
-    <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden px-[var(--gutter)] pb-28 pt-32">
+    <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden px-[var(--gutter)] pb-20 pt-28 sm:pb-28 sm:pt-32">
       <AmbientField />
 
       <div className="relative mx-auto w-full max-w-4xl text-center">
         <motion.p {...step(0)} className="flex justify-center">
           <span className="specular inline-flex items-center gap-2.5 rounded-full px-4 py-1.5 text-[0.8125rem] text-text-2">
             <span className="relative flex size-1.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-gold opacity-60" />
+              <span className="absolute inline-flex size-full rounded-full bg-gold opacity-60 motion-safe:animate-ping" />
               <span className="relative inline-flex size-1.5 rounded-full bg-gold" />
             </span>
             Commissions open
@@ -35,9 +35,7 @@ export function AmbientHero() {
           {...step(1)}
           className="balance mx-auto mt-9 max-w-[17ch] font-serif text-[length:var(--display)] font-light leading-[1.02] tracking-[-0.025em]"
         >
-          Systems engineered
-          <br />
-          to outlive the build.
+          Systems engineered to outlive the build.
         </motion.h1>
 
         <motion.p

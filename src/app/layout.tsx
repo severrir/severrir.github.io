@@ -30,7 +30,9 @@ const plexSerif = IBM_Plex_Serif({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://severrir.dev"),
+  // The live origin. It must match where the site is actually served or every
+  // absolute OG/canonical URL resolves to a host that does not exist.
+  metadataBase: new URL("https://severrir.github.io"),
   title: {
     default: "severrir — systems engineering and full-stack development",
     template: "%s — severrir",
@@ -41,17 +43,44 @@ export const metadata: Metadata = {
     title: "severrir — systems engineering and full-stack development",
     description: "Systems engineered to outlive the build.",
     type: "website",
+    url: "/",
+    siteName: "severrir",
+    locale: "en_US",
   },
+  twitter: {
+    // summary_large_image is what turns a pasted link into a full-width card
+    // instead of a thumbnail beside two lines of text.
+    card: "summary_large_image",
+    title: "severrir — systems engineering and full-stack development",
+    description: "Systems engineered to outlive the build.",
+  },
+  alternates: { canonical: "/" },
   robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // data-scroll-behavior is required as of Next 16: it no longer forces
+    // scroll-behavior:auto during route changes, so without this the outgoing
+    // page smooth-scrolls to the top before the swap and navigation feels laggy.
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${plexSans.variable} ${plexMono.variable} ${plexSerif.variable} h-full antialiased`}
     >
       <body className="grain flex min-h-full flex-col font-sans">
+        {/*
+         * Runs before the curtain paints, so the decision to show it is made on
+         * the first frame rather than after hydration. Returning visitors and
+         * anyone who prefers reduced motion never see it; without JavaScript the
+         * attribute is never set and the curtain stays display:none.
+         */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(!localStorage.getItem('severrir:booted')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.setAttribute('data-booting','')}}catch(e){}",
+          }}
+        />
         <SoundBoot />
         <BootScreen />
         <a

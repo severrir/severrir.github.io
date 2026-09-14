@@ -1,12 +1,18 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MotionValue } from "framer-motion";
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useSpring,
+  useTransform,
+  useReducedMotion,
+} from "framer-motion";
 import { projects, type Project } from "@/data/projects";
 import { GithubMark } from "../github-mark";
 import { VideoFacade } from "../video-facade";
-import { EASE, Section, SectionHeading } from "../ui";
+import { Section, SectionHeading } from "../ui";
 
 /**
  * Stacking scroll cards with weighted inertia.
@@ -16,9 +22,33 @@ import { EASE, Section, SectionHeading } from "../ui";
  * spring rather than raw scroll, which is what gives it weight instead of the
  * card snapping to the scrollbar.
  */
+/**
+ * Stacking needs real vertical room. Below lg a card is heading, paragraph, tag
+ * list and a 16:9 video stacked in one column — routinely taller than the 74svh
+ * box the pile assumes, at which point the offsets push content under the fixed
+ * header. It also puts five simultaneously backdrop-blurred layers on the GPUs
+ * least able to afford them. Defaults to off so phones never see the broken
+ * state even for a frame; the section sits below the fold, so desktop upgrades
+ * long before it is scrolled to.
+ */
+function useStackable() {
+  const [stackable, setStackable] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setStackable(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+
+  return stackable;
+}
+
 export function StackingShowcase() {
   const container = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const stackable = useStackable();
 
   const { scrollYProgress } = useScroll({
     target: container,
@@ -40,7 +70,7 @@ export function StackingShowcase() {
             index={index}
             total={projects.length}
             progress={scrollYProgress}
-            reduced={Boolean(reduced)}
+            reduced={Boolean(reduced) || !stackable}
           />
         ))}
       </div>
@@ -64,7 +94,13 @@ function ProjectCard({
   const start = index / total;
   const targetScale = 1 - (total - index) * 0.03;
 
-  const scale = useTransform(progress, [start, 1], [1, targetScale]);
+  const rawScale = useTransform(progress, [start, 1], [1, targetScale]);
+  /*
+   * Damped rather than bound straight to the scrollbar. Raw scroll makes the
+   * card track the wheel exactly, which reads mechanical; the spring gives the
+   * pile the weight the section is going for.
+   */
+  const scale = useSpring(rawScale, { stiffness: 120, damping: 28, mass: 0.6 });
   /* Cards deeper in the pile also lose light, so depth is carried by value and
      not by size alone. */
   const dim = useTransform(progress, [start, 1], [0, 0.55]);
@@ -79,8 +115,9 @@ function ProjectCard({
 
       <div className="grid gap-8 p-7 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-14">
         <div className="flex min-w-0 flex-col justify-center">
-          <p className="truncate font-mono text-xs tracking-tight text-text-2">
-            {project.repo}
+          <p className="flex min-w-0 items-center gap-2.5 font-mono text-xs tracking-tight text-text-2">
+            <span aria-hidden="true" className="h-px w-5 shrink-0 bg-gold/45" />
+            <span className="truncate">{project.repo}</span>
           </p>
 
           <h3 className="mt-5 font-serif text-[length:var(--heading)] font-light leading-tight tracking-[-0.015em]">
@@ -96,7 +133,7 @@ function ProjectCard({
               href={project.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 py-1.5 text-sm font-medium text-text transition-colors duration-200 hover:text-gold"
+              className="inline-flex items-center gap-2 py-1.5 text-sm font-medium text-text underline decoration-transparent underline-offset-4 transition-colors duration-200 hover:text-gold hover:decoration-gold/60"
             >
               <GithubMark className="size-4" />
               Read the source
@@ -135,7 +172,6 @@ function ProjectCard({
     <div className="sticky top-24 flex min-h-[74svh] items-center justify-center">
       <motion.div
         style={{ scale, top: `${index * 18}px` }}
-        transition={{ ease: EASE }}
         className="relative w-full origin-top"
       >
         {card}

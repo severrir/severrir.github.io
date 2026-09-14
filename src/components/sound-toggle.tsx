@@ -13,7 +13,7 @@ export function SoundToggle({ className = "" }: { className?: string }) {
       aria-pressed={muted}
       aria-label={muted ? "Turn interface sound on" : "Turn interface sound off"}
       title={muted ? "Sound off" : "Sound on"}
-      className={`grid size-9 place-items-center rounded-md text-text-2 transition-colors duration-200 hover:text-text ${className}`}
+      className={`grid size-11 sm:size-9 place-items-center rounded-md text-text-2 transition-colors duration-200 hover:text-text ${className}`}
     >
       {muted ? (
         <VolumeX className="size-4" strokeWidth={1.5} aria-hidden="true" />

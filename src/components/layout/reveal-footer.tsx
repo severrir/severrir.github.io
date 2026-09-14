@@ -40,20 +40,44 @@ export function RevealFooter() {
     const el = ref.current;
     if (!el) return;
 
-    const sync = () => {
+    let frame = 0;
+    /*
+     * Remember what was last committed. Android fires resize continuously while
+     * scrolling as the URL bar shows and hides, and almost none of those events
+     * change the answer — without this guard each one re-rendered the footer.
+     */
+    let lastHeight = -1;
+    let lastFits: boolean | null = null;
+
+    const measure = () => {
+      frame = 0;
       const h = el.offsetHeight;
       const fits = h <= window.innerHeight - 8;
+      if (h === lastHeight && fits === lastFits) return;
+      lastHeight = h;
+      lastFits = fits;
       setCanReveal(fits);
       setHeight(fits ? h : 0);
     };
 
-    sync();
-    const observer = new ResizeObserver(sync);
+    /*
+     * Coalesce every trigger into one read per frame. offsetHeight forces a
+     * synchronous layout, so running it straight off an unthrottled listener
+     * thrashed layout on exactly the devices least able to absorb it.
+     */
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(measure);
+    };
+
+    measure();
+    const observer = new ResizeObserver(schedule);
     observer.observe(el);
-    window.addEventListener("resize", sync);
+    window.addEventListener("resize", schedule, { passive: true });
     return () => {
+      if (frame) cancelAnimationFrame(frame);
       observer.disconnect();
-      window.removeEventListener("resize", sync);
+      window.removeEventListener("resize", schedule);
     };
   }, []);
 

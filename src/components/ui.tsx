@@ -76,7 +76,21 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className={`px-[var(--gutter)] py-24 sm:py-32 ${className}`}>
+    <section className={`relative px-[var(--gutter)] py-24 sm:py-32 ${className}`}>
+      {/*
+       * The anchor is a zero-height marker at the content edge rather than the
+       * id sitting on the section box. With the id on the box, html's
+       * scroll-padding-top stacks on top of this section's own py-24/sm:py-32
+       * and every nav jump lands ~200px above the heading. Offset 2rem above the
+       * heading so it arrives with air under the header, not jammed against it.
+       */}
+      {id ? (
+        <span
+          id={id}
+          aria-hidden="true"
+          className="pointer-events-none absolute left-0 top-16 block h-0 w-0 sm:top-24"
+        />
+      ) : null}
       <div className="mx-auto w-full max-w-6xl">{children}</div>
     </section>
   );

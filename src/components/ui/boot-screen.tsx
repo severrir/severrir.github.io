@@ -1,82 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { EASE } from "../ui";
+import { useEffect } from "react";
 import { MorphLoader } from "./morph-loader";
 
-const MIN_VISIBLE_MS = 900;
-const SESSION_KEY = "severrir:booted";
+const STORAGE_KEY = "severrir:booted";
 
 /**
- * First-load curtain. Holds the morph mark over the shell until fonts and the
- * first paint have settled, then lifts.
+ * First-visit curtain.
  *
- * It shows once per tab: a curtain on every client-side navigation would be
- * theatre, and it would make the site feel slower than it is. If JavaScript
- * never runs, the curtain never mounts and the page is simply there.
+ * The markup here is server-rendered and hidden by default; the inline script in
+ * the root layout decides before first paint whether to reveal it by setting
+ * data-booting on <html>. That ordering is the whole point — the previous
+ * version started hidden and flipped itself on in an effect, so the curtain
+ * dropped over content the visitor could already see and made a fast page feel
+ * slow. No script means no attribute, so a JS-less visitor simply gets the page.
+ *
+ * It lifts as soon as fonts settle, with no artificial floor, and is gated to
+ * once per visitor rather than once per tab.
  */
 export function BootScreen() {
-  const [visible, setVisible] = useState(false);
-
   useEffect(() => {
-    let booted = false;
-    try {
-      booted = window.sessionStorage.getItem(SESSION_KEY) === "1";
-    } catch {
-      /* Private mode: fall through and just show it. */
-    }
-    if (booted) return;
+    const root = document.documentElement;
+    if (!root.hasAttribute("data-booting")) return;
 
-    setVisible(true);
-    document.body.style.overflow = "hidden";
-
-    const start = performance.now();
-    const finish = () => {
-      const remaining = Math.max(0, MIN_VISIBLE_MS - (performance.now() - start));
-      window.setTimeout(() => {
-        setVisible(false);
-        document.body.style.overflow = "";
-        try {
-          window.sessionStorage.setItem(SESSION_KEY, "1");
-        } catch {
-          /* Nothing to persist to; the curtain just shows again next load. */
-        }
-      }, remaining);
+    let lifted = false;
+    const lift = () => {
+      if (lifted) return;
+      lifted = true;
+      root.setAttribute("data-booting", "out");
+      try {
+        window.localStorage.setItem(STORAGE_KEY, "1");
+      } catch {
+        /* Private mode: the curtain simply shows again next visit. */
+      }
+      window.setTimeout(() => root.removeAttribute("data-booting"), 650);
     };
 
     const ready = document.fonts?.ready ?? Promise.resolve();
-    ready.then(finish).catch(finish);
-
-    return () => {
-      document.body.style.overflow = "";
-    };
+    ready.then(lift).catch(lift);
+    // Never hold the page hostage if fonts.ready never settles.
+    const bail = window.setTimeout(lift, 2000);
+    return () => window.clearTimeout(bail);
   }, []);
 
   return (
-    <AnimatePresence>
-      {visible ? (
-        <motion.div
-          key="boot"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0, filter: "blur(8px)" }}
-          transition={{ duration: 0.75, ease: EASE }}
-          className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-bg"
-        >
-          <div className="bloom absolute inset-0" />
-          <div className="relative flex flex-col items-center">
-            <MorphLoader label="Loading severrir" />
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, ease: EASE, delay: 0.25 }}
-              className="mt-10 font-serif text-lg font-light tracking-[-0.02em] text-text"
-            >
-              severrir
-            </motion.p>
-          </div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
+    <div className="boot-curtain" aria-hidden="true">
+      <div className="bloom absolute inset-0" />
+      <div className="relative flex flex-col items-center">
+        <MorphLoader label="Loading severrir" />
+        <p className="mt-10 font-serif text-lg font-light tracking-[-0.02em] text-text">
+          severrir
+        </p>
+      </div>
+    </div>
   );
 }

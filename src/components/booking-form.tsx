@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
 import { useForm, ValidationError } from "@formspree/react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, CircleAlert } from "lucide-react";
 import { tiers } from "@/data/pricing";
 import { containsProfanity, PROFANITY_MESSAGE } from "@/lib/profanity";
+import { DISCORD_MESSAGE, isValidDiscord, normalizeDiscord } from "@/lib/discord";
 import { playSound, useSound } from "@/lib/useSound";
 import { EASE } from "./ui";
 import { SpinningBorderButton } from "./ui/spinning-border-button";
@@ -15,7 +15,7 @@ import { SpinningBorderButton } from "./ui/spinning-border-button";
 const FIELD =
   "w-full rounded-md border border-rule bg-bg-2/60 px-4 py-3.5 text-[0.9375rem] font-light text-text " +
   "placeholder:text-text-2/55 transition-[border-color,box-shadow] duration-200 ease-out " +
-  "hover:border-rule-strong focus:border-edge-gold-strong focus:outline-none " +
+  "hover:border-rule-strong focus:border-edge-gold-strong " +
   "focus:shadow-[0_0_25px_-5px_rgb(212_175_55_/_0.15)]";
 
 function Label({
@@ -43,21 +43,30 @@ function Label({
 
 export function BookingForm() {
   const [state, handleSubmit] = useForm("xgojkepa");
-  const searchParams = useSearchParams();
   const sound = useSound();
   const reduced = useReducedMotion();
 
-  const initialTier = useMemo(() => {
-    const requested = searchParams.get("tier");
-    return tiers.some((t) => t.id === requested) ? (requested as string) : "system";
-  }, [searchParams]);
-
-  const [tier, setTier] = useState(initialTier);
+  const [tier, setTier] = useState("system");
   const [discord, setDiscord] = useState("");
   const [scope, setScope] = useState("");
   const [blocked, setBlocked] = useState<string | null>(null);
+  const [discordError, setDiscordError] = useState<string | null>(null);
 
-  useEffect(() => setTier(initialTier), [initialTier]);
+  /*
+   * Read ?tier= off the URL after mount rather than with useSearchParams.
+   * useSearchParams opts the whole route out of prerendering, and under
+   * output:"export" that means /booking ships as an empty skeleton with no form
+   * in the HTML at all. Reading it here keeps the form statically rendered and
+   * still honours the deep link from the pricing table.
+   */
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("tier");
+    // Reading location is exactly the "sync from an external system" case the
+    // rule exempts: the URL does not exist at prerender time, so this cannot be
+    // lifted into the initial state without a hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (requested && tiers.some((t) => t.id === requested)) setTier(requested);
+  }, []);
 
   useEffect(() => {
     if (state.succeeded) playSound("success");
@@ -87,6 +96,14 @@ export function BookingForm() {
   }
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    if (!isValidDiscord(discord)) {
+      event.preventDefault();
+      setDiscordError(DISCORD_MESSAGE);
+      document.getElementById("discord")?.focus();
+      return;
+    }
+    setDiscordError(null);
+
     if (containsProfanity(scope)) {
       event.preventDefault();
       setBlocked(PROFANITY_MESSAGE);
@@ -119,10 +136,32 @@ export function BookingForm() {
             name="discord"
             required
             value={discord}
-            onChange={(e) => setDiscord(e.target.value)}
+            onChange={(e) => {
+              setDiscord(e.target.value);
+              if (discordError) setDiscordError(null);
+            }}
+            onBlur={(e) => {
+              // Normalise what was pasted, then judge it. Empty stays silent —
+              // that is the required attribute's job, not a validation error.
+              const value = normalizeDiscord(e.target.value);
+              setDiscord(value);
+              setDiscordError(!value || isValidDiscord(value) ? null : DISCORD_MESSAGE);
+            }}
+            aria-invalid={discordError ? true : undefined}
+            aria-describedby={discordError ? "discord-error" : undefined}
             placeholder="sam.dev"
             className={FIELD}
           />
+          {discordError ? (
+            <p
+              id="discord-error"
+              role="alert"
+              className="mt-2 flex items-start gap-2 text-sm font-light text-gold"
+            >
+              <CircleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+              {discordError}
+            </p>
+          ) : null}
         </div>
       </div>
 

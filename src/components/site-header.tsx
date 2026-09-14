@@ -40,6 +40,9 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Dismiss the mobile menu when navigation actually happens. The route is an
+  // external system here, not derived state, so an effect is the right shape.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
@@ -101,7 +104,7 @@ export function SiteHeader() {
             aria-expanded={open}
             aria-controls="mobile-nav"
             aria-label={open ? "Close menu" : "Open menu"}
-            className="grid size-9 place-items-center rounded-md text-text md:hidden"
+            className="grid size-11 place-items-center rounded-md text-text md:hidden"
             {...sound}
           >
             {open ? (

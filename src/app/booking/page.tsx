@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { BookingForm } from "@/components/booking-form";
 import { Reveal, Section } from "@/components/ui";
 
@@ -16,15 +15,6 @@ const SEQUENCE = [
   "Payment is confirmed",
   "The files are delivered",
 ];
-
-function FormFallback() {
-  return (
-    <div
-      className="specular mx-auto h-[36rem] max-w-3xl animate-pulse rounded-lg"
-      aria-hidden="true"
-    />
-  );
-}
 
 export default function BookingPage() {
   return (
@@ -57,9 +47,7 @@ export default function BookingPage() {
       </Section>
 
       <Section className="!pt-4">
-        <Suspense fallback={<FormFallback />}>
-          <BookingForm />
-        </Suspense>
+        <BookingForm />
       </Section>
     </>
   );
