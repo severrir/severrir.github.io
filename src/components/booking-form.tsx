@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useForm, ValidationError } from "@formspree/react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -8,9 +8,12 @@ import { Check, CircleAlert } from "lucide-react";
 import { tiers } from "@/data/pricing";
 import { containsProfanity, PROFANITY_MESSAGE } from "@/lib/profanity";
 import { DISCORD_MESSAGE, isValidDiscord, normalizeDiscord } from "@/lib/discord";
+import { useAuth, discordHandleOf, displayNameOf } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 import { playSound, useSound } from "@/lib/useSound";
 import { EASE } from "./ui";
 import { SpinningBorderButton } from "./ui/spinning-border-button";
+import { SignInPanel, SignInPanelSkeleton } from "./auth/sign-in-panel";
 
 const FIELD =
   "w-full rounded-md border border-rule bg-bg-2/60 px-4 py-3.5 text-[0.9375rem] font-light text-text " +
@@ -41,16 +44,58 @@ function Label({
   );
 }
 
+/**
+ * Sending a commission request needs an account, so this decides which of three
+ * things occupies the form's frame: a placeholder while the session is read,
+ * the sign-in panel, or the form itself. All three are the same width and the
+ * same surface, so the page does not rearrange itself underneath anyone.
+ */
 export function BookingForm() {
+  const { loading, user, unavailable } = useAuth();
+
+  /*
+   * With no Supabase project configured there is no sign-in to require, so the
+   * form stays open exactly as it was before accounts existed. Gating it would
+   * mean the site could not take a commission at all between deploying this and
+   * finishing SETUP.md — a closed door where there used to be a form.
+   *
+   * This is a build-time condition, not a runtime one: if the project is
+   * configured but paused or unreachable, the gate still holds.
+   */
+  if (unavailable) return <CommissionForm />;
+
+  if (loading) return <SignInPanelSkeleton />;
+  if (!user) return <SignInPanel returnTo="/booking" />;
+  return <CommissionForm />;
+}
+
+function CommissionForm() {
   const [state, handleSubmit] = useForm("xgojkepa");
+  const { user } = useAuth();
   const sound = useSound();
   const reduced = useReducedMotion();
 
+  const accountHandle = discordHandleOf(user);
+
   const [tier, setTier] = useState("system");
-  const [discord, setDiscord] = useState("");
+  const [discord, setDiscord] = useState(accountHandle);
   const [scope, setScope] = useState("");
   const [blocked, setBlocked] = useState<string | null>(null);
   const [discordError, setDiscordError] = useState<string | null>(null);
+
+  /*
+   * Everything the database record needs, captured at the moment of submit.
+   * Reading it back out of state when Formspree confirms would record whatever
+   * the form happens to hold then, which is not necessarily what was sent.
+   */
+  const submitted = useRef({
+    userId: "",
+    name: "",
+    email: "",
+    discord: "",
+    tier: "",
+    message: "",
+  });
 
   /*
    * Read ?tier= off the URL after mount rather than with useSearchParams.
@@ -69,12 +114,37 @@ export function BookingForm() {
   }, []);
 
   useEffect(() => {
-    if (state.succeeded) playSound("success");
+    if (!state.succeeded) return;
+    playSound("success");
+
+    /*
+     * The request has already reached Discord through Formspree by this point.
+     * This is the second, independent copy — the one the dashboard reads. If it
+     * fails there is nothing useful to tell the visitor, because from their
+     * side the request genuinely did go through.
+     */
+    const record = submitted.current;
+    if (!supabase || !record.userId) return;
+
+    void supabase
+      .from("bookings")
+      .insert({
+        user_id: record.userId,
+        name: record.name,
+        discord: record.discord,
+        email: record.email || null,
+        tier: record.tier,
+        message: record.message,
+      })
+      .then(({ error }) => {
+        if (error) console.error("Could not record the request:", error.message);
+      });
   }, [state.succeeded]);
 
   if (state.succeeded) {
     return (
       <motion.div
+        data-reveal
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.85, ease: EASE }}
@@ -111,6 +181,19 @@ export function BookingForm() {
       return;
     }
     setBlocked(null);
+
+    const form = event.currentTarget;
+    const typedName = (form.elements.namedItem("name") as HTMLInputElement)?.value ?? "";
+
+    submitted.current = {
+      userId: user?.id ?? "",
+      name: typedName.trim() || displayNameOf(user) || "Unnamed",
+      email: (form.elements.namedItem("email") as HTMLInputElement)?.value ?? "",
+      discord: normalizeDiscord(discord) || accountHandle,
+      tier,
+      message: scope,
+    };
+
     handleSubmit(event);
   };
 
@@ -124,6 +207,7 @@ export function BookingForm() {
             name="name"
             required
             autoComplete="name"
+            defaultValue={displayNameOf(user)}
             placeholder="Sam"
             className={FIELD}
           />
@@ -148,7 +232,9 @@ export function BookingForm() {
               setDiscordError(!value || isValidDiscord(value) ? null : DISCORD_MESSAGE);
             }}
             aria-invalid={discordError ? true : undefined}
-            aria-describedby={discordError ? "discord-error" : undefined}
+            aria-describedby={
+              discordError ? "discord-error" : accountHandle ? "discord-source" : undefined
+            }
             placeholder="sam.dev"
             className={FIELD}
           />
@@ -160,6 +246,12 @@ export function BookingForm() {
             >
               <CircleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
               {discordError}
+            </p>
+          ) : accountHandle ? (
+            <p id="discord-source" className="mt-2 text-xs font-light text-text-2">
+              {discord === accountHandle
+                ? "From your Discord account. Change it to be replied to somewhere else."
+                : `Your account is ${accountHandle}.`}
             </p>
           ) : null}
         </div>
@@ -174,6 +266,7 @@ export function BookingForm() {
           type="email"
           name="email"
           autoComplete="email"
+          defaultValue={user?.email ?? ""}
           placeholder="sam@studio.com"
           className={FIELD}
         />
@@ -238,6 +331,7 @@ export function BookingForm() {
           name="message"
           required
           rows={8}
+          maxLength={5000}
           value={scope}
           onChange={(e) => {
             setScope(e.target.value);

@@ -1,20 +1,28 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ActionLink, EASE } from "../ui";
 import { SpinningBorderLink } from "../ui/spinning-border-button";
 import { AmbientField } from "./ambient-field";
 
-/* One orchestrated entrance, staggered down the column. */
+/*
+ * One orchestrated entrance, staggered down the column.
+ *
+ * data-reveal rather than a reduced-motion branch. Branching applied these
+ * props on the server and none of them on the client, and React leaves that
+ * mismatch unpatched — so the whole hero, headline included, stayed at
+ * opacity 0 for anyone who prefers reduced motion. The rule in globals.css
+ * pins the marked elements visible instead. See the note on Reveal in ui.tsx.
+ */
 const rise = (i: number) => ({
+  "data-reveal": true,
   initial: { opacity: 0, y: 22, filter: "blur(6px)" },
   animate: { opacity: 1, y: 0, filter: "blur(0px)" },
   transition: { duration: 1.05, ease: EASE, delay: 0.15 + i * 0.11 },
 });
 
 export function AmbientHero() {
-  const reduced = useReducedMotion();
-  const step = (i: number) => (reduced ? {} : rise(i));
+  const step = (i: number) => rise(i);
 
   return (
     <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden px-[var(--gutter)] pb-20 pt-28 sm:pb-28 sm:pt-32">

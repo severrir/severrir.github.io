@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Braces,
   Gamepad2,
@@ -23,27 +23,27 @@ const ICONS = {
 } as const;
 
 export function ServiceRows({ services }: { services: Service[] }) {
-  const reduced = useReducedMotion();
   const sound = useSound();
   const nameById = new Map(services.map((s) => [s.id, s.name]));
 
   /* One orchestrated reveal for the whole list. Six independently triggered
-     rows turn a scroll into a slideshow. */
-  const listMotion = reduced
-    ? {}
-    : {
-        initial: "rest",
-        whileInView: "in",
-        viewport: { once: true, margin: "0px 0px -12% 0px" },
-        variants: { rest: {}, in: { transition: { staggerChildren: 0.07 } } },
-      };
+     rows turn a scroll into a slideshow.
 
-  const rowMotion = reduced
-    ? {}
-    : {
-        variants: { rest: { opacity: 0, y: 18 }, in: { opacity: 1, y: 0 } },
-        transition: { duration: 0.85, ease: EASE },
-      };
+     Reduced motion is handled by the data-reveal rule in globals.css rather
+     than by branching here: branching spread the animation props on the server
+     and nothing on the client, and React leaves that mismatch unpatched — which
+     stranded all six rows at opacity 0. See the note on Reveal in ui.tsx. */
+  const listMotion = {
+    initial: "rest",
+    whileInView: "in",
+    viewport: { once: true, margin: "0px 0px -12% 0px" },
+    variants: { rest: {}, in: { transition: { staggerChildren: 0.07 } } },
+  } as const;
+
+  const rowMotion = {
+    variants: { rest: { opacity: 0, y: 18 }, in: { opacity: 1, y: 0 } },
+    transition: { duration: 0.85, ease: EASE },
+  } as const;
 
   return (
     <Section className="!pt-0">
@@ -54,6 +54,7 @@ export function ServiceRows({ services }: { services: Service[] }) {
             <motion.article
               key={service.id}
               id={service.id}
+              data-reveal
               {...rowMotion}
               onPointerEnter={sound.onPointerEnter}
               className="group relative grid scroll-mt-24 gap-6 border-t border-rule py-12 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] lg:gap-14 lg:py-16"

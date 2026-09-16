@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import type { ComponentProps, ReactNode } from "react";
 import { useSound } from "@/lib/useSound";
 
@@ -109,12 +109,24 @@ export function Reveal({
   delay?: number;
   className?: string;
 }) {
-  const reduced = useReducedMotion();
-
-  if (reduced) return <div className={className}>{children}</div>;
-
+  /*
+   * Reduced motion is honoured in CSS, not here, and that is deliberate.
+   *
+   * Branching on useReducedMotion() rendered a motion.div on the server — which
+   * writes inline opacity:0 — and a plain div on the client, because the server
+   * cannot read a media query. React 19 reports that mismatch as "this won't be
+   * patched up" and leaves the server's opacity:0 on the element forever, so
+   * every heading and paragraph on the site stayed invisible for anyone who
+   * prefers reduced motion.
+   *
+   * With no hook, server and client render the identical element and there is
+   * no mismatch to strand. The [data-reveal] rule in globals.css then pins opacity
+   * and transform for those visitors, and an !important declaration in a
+   * stylesheet outranks the inline style framer writes.
+   */
   return (
     <motion.div
+      data-reveal
       className={className}
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}

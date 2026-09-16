@@ -234,6 +234,24 @@ textarea:-webkit-autofill {
   html {
     scroll-behavior: auto;
   }
+
+  /**
+   * Framer writes its animated values as inline styles, which the rules below
+   * cannot touch — an element left mid-entrance simply stays at opacity 0. An
+   * !important declaration in a stylesheet does outrank a plain inline style,
+   * so this is what actually guarantees the content is on screen for anyone who
+   * asked for less motion. Without it a hydration mismatch, a missed
+   * intersection callback, or an interrupted animation leaves text invisible
+   * with no way to recover it.
+   */
+  /* The marked element only, never its descendants: several rows and cards
+     carry decorative overlays that are deliberately opacity-0 until hover, and
+     a descendant selector here would pin those permanently on. */
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
   *,
   *::before,
   *::after {

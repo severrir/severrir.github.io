@@ -32,6 +32,16 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Repository variables, not secrets. Both values are compiled into the
+          # client bundle and are public by design — the anon key is the key
+          # browsers are meant to hold, and row-level security is what actually
+          # guards the data. Set them under
+          # Settings → Secrets and variables → Actions → Variables.
+          # If they are unset the site still builds; sign-in and the dashboard
+          # report that they are not connected yet.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

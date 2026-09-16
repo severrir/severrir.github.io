@@ -9,7 +9,8 @@ import {
   useTransform,
   useReducedMotion,
 } from "framer-motion";
-import { projects, type Project } from "@/data/projects";
+import { type Project } from "@/data/projects";
+import { useProjects } from "@/lib/use-projects";
 import { GithubMark } from "../github-mark";
 import { VideoFacade } from "../video-facade";
 import { Section, SectionHeading } from "../ui";
@@ -49,6 +50,10 @@ export function StackingShowcase() {
   const container = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
   const stackable = useStackable();
+  /* The committed content from src/data/projects.ts until the dashboard's
+     overrides arrive, so the section is never empty and the prerendered HTML
+     still carries real copy. */
+  const { projects } = useProjects();
 
   const { scrollYProgress } = useScroll({
     target: container,

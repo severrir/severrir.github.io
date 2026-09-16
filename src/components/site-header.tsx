@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { EASE } from "./ui";
 import { SpinningBorderLink } from "./ui/spinning-border-button";
 import { SoundToggle } from "./sound-toggle";
+import { AccountChip } from "./auth/account-chip";
 import { useSound } from "@/lib/useSound";
 
 const NAV = [
@@ -91,6 +92,9 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-3">
           <SoundToggle />
+          {/* Sits beside the sound toggle on every breakpoint: knowing whether
+              you are signed in is not a thing to hide behind a menu button. */}
+          <AccountChip />
           {/* The wrapper does the hiding: `hidden` on the link itself loses to
               the base `inline-flex` at equal specificity. */}
           <span className="hidden md:block">

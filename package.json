@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@formspree/react": "^3.0.0",
+    "@supabase/supabase-js": "^2.116.0",
     "framer-motion": "^13.2.0",
     "howler": "^2.2.4",
     "lucide-react": "^1.45.0",

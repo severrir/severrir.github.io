@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Deno source. It is linted by the Supabase CLI, not by the Next config.
+    "supabase/**",
   ]),
 ]);
 

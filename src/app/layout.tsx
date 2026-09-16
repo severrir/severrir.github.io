@@ -4,6 +4,8 @@ import { SiteHeader } from "@/components/site-header";
 import { RevealFooter } from "@/components/layout/reveal-footer";
 import { SoundBoot } from "@/components/sound-boot";
 import { BootScreen } from "@/components/ui/boot-screen";
+import { VisitTracker } from "@/components/visit-tracker";
+import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 const plexSans = IBM_Plex_Sans({
@@ -83,18 +85,27 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
         <SoundBoot />
         <BootScreen />
-        <a
-          href="#main"
-          className="sr-only rounded-md bg-gold px-4 py-2 font-medium text-bg focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[80]"
-        >
-          Skip to content
-        </a>
-        <SiteHeader />
-        {/* Sits above the fixed footer so the footer is revealed as this scrolls off. */}
-        <main id="main" className="relative z-10 flex-1 bg-bg">
-          {children}
-        </main>
-        <RevealFooter />
+        {/*
+         * Wraps everything below rather than only the routes that need a
+         * session: the header shows signed-in state on every page, and the
+         * visitor counter has to know whether it is looking at the owner before
+         * it counts anyone.
+         */}
+        <AuthProvider>
+          <VisitTracker />
+          <a
+            href="#main"
+            className="sr-only rounded-md bg-gold px-4 py-2 font-medium text-bg focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[80]"
+          >
+            Skip to content
+          </a>
+          <SiteHeader />
+          {/* Sits above the fixed footer so the footer is revealed as this scrolls off. */}
+          <main id="main" className="relative z-10 flex-1 bg-bg">
+            {children}
+          </main>
+          <RevealFooter />
+        </AuthProvider>
       </body>
     </html>
   );
