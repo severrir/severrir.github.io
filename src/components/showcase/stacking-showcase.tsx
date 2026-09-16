@@ -179,7 +179,15 @@ function ProjectCard({
   }
 
   return (
-    <div className="sticky top-24 flex min-h-[74svh] items-center justify-center">
+    /*
+     * Aligned to the top of its box, not centred in it. The box is 74svh
+     * because that is the scroll distance each card gets, but a card centred in
+     * it carries half that emptiness above itself — which, on the first card,
+     * lands between the section heading and the pile as a hole with nothing in
+     * it. Pinned to the top, the slack sits below each card instead, where the
+     * next card rises through it.
+     */
+    <div className="sticky top-24 flex min-h-[74svh] items-start justify-center">
       <motion.div
         style={{ scale, top: `${index * 24}px` }}
         className="relative w-full origin-top"

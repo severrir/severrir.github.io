@@ -165,9 +165,21 @@ body {
    * highlight actually present the lip is just a brighter line and the face
    * below it stays a flat slab.
    */
-  background:
-    radial-gradient(120% 75% at 14% -10%, rgb(233 240 255 / 0.09), transparent 62%),
-    linear-gradient(180deg, #1a2d57 0%, #101d40 46%, #090f26 100%);
+  /*
+   * One gradient, running straight down the card. There was a radial highlight
+   * over the top-left as well, meant to read as the light the bevel implies —
+   * but the dark well of the demo cut a hard edge through it, and a soft glow
+   * with a straight edge through it stops being light and becomes a pale
+   * rectangle sitting on the card. Light that any element on top can crop is
+   * light that will eventually look like a shape.
+   */
+  background: linear-gradient(
+    180deg,
+    #1c3059 0%,
+    #16264b 22%,
+    #101d40 52%,
+    #090f26 100%
+  );
   border: 1px solid var(--edge-gold);
   /*
    * Four things, outside to in: the cast shadow that holds the card off the
