@@ -56,7 +56,7 @@ function Notice({
 }
 
 export function AdminShell() {
-  const { loading, adminResolved, user, isAdmin, unavailable } = useAuth();
+  const { loading, adminResolved, user, isAdmin, adminError, unavailable } = useAuth();
   const [section, setSection] = useState<SectionId>("visitors");
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const sound = useSound();
@@ -88,6 +88,30 @@ export function AdminShell() {
 
   if (!user) return <SignInPanel returnTo="/admin" />;
 
+  /*
+   * A failed lookup and a negative one are different facts and get different
+   * screens. Told apart, "the query was refused" is a sentence someone can act
+   * on; collapsed together, it reads as a verdict about the account and sends
+   * whoever is holding it looking in the wrong place.
+   */
+  if (adminError) {
+    return (
+      <Notice
+        title="Could not check whether this account is the owner."
+        action={
+          <ActionLink href="/" variant="glass">
+            Back to the site
+          </ActionLink>
+        }
+      >
+        The database refused or could not answer the question, so the dashboard
+        is not opening on a guess. Signed in as {displayNameOf(user)}, account{" "}
+        <span className="font-mono text-text">{user.id}</span>. The database
+        said: <span className="font-mono text-text">{adminError}</span>
+      </Notice>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <Notice
@@ -98,9 +122,10 @@ export function AdminShell() {
           </ActionLink>
         }
       >
-        You are signed in as {displayNameOf(user)}, which is not the owner
-        account. Nothing here is readable from it. If this should be your
-        dashboard, add this account to the admins table and reload.
+        You are signed in as {displayNameOf(user)}, account{" "}
+        <span className="font-mono text-text">{user.id}</span>, which is not in
+        the admins table. Nothing here is readable from it. If this should be
+        your dashboard, add that id to the admins table and reload.
       </Notice>
     );
   }

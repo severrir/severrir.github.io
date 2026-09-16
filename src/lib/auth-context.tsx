@@ -28,6 +28,10 @@ type AuthState = {
   /** True once the admin lookup has settled for the current session. Anything
       that must not act on a half-known identity waits for this, not isAdmin. */
   adminResolved: boolean;
+  /** Why the admin lookup returned no, when the reason was a failure rather
+      than a verdict. Null both when the account is the owner and when it
+      plainly is not. */
+  adminError: string | null;
   /** Set when Supabase has not been configured yet. */
   unavailable: boolean;
   signInWithDiscord: (returnTo?: string) => Promise<{ error: string | null }>;
@@ -92,9 +96,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * "yes" from a previous account can never be read as current — and the effect
    * that performs the lookup never has to write state up front to clear one.
    */
-  const [adminCheck, setAdminCheck] = useState<{ userId: string; isAdmin: boolean } | null>(
-    null,
-  );
+  const [adminCheck, setAdminCheck] = useState<{
+    userId: string;
+    isAdmin: boolean;
+    /* Why the answer is no. A refused or unreachable query is not the same
+       fact as "this account is not the owner", and collapsing the two makes a
+       broken lookup look like a settled verdict — which is exactly the shape
+       of failure nobody can debug from the page. */
+    error: string | null;
+  } | null>(null);
 
   /* Guards a late-resolving admin lookup from writing state for a user who has
      already signed out. */
@@ -141,6 +151,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /* Signed out is a settled answer, not a pending one. */
   const adminResolved = userId === null || adminCheck?.userId === userId;
   const isAdmin = adminCheck?.userId === userId && adminCheck.isAdmin;
+  const adminError =
+    (adminCheck?.userId === userId && adminCheck.error) || null;
 
   useEffect(() => {
     latestUserId.current = userId;
@@ -158,9 +170,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select("user_id")
       .eq("user_id", userId)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (latestUserId.current !== userId) return;
-        setAdminCheck({ userId, isAdmin: Boolean(data) });
+        setAdminCheck({
+          userId,
+          isAdmin: Boolean(data),
+          error: error ? error.message : null,
+        });
       });
   }, [userId]);
 
@@ -203,11 +219,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       isAdmin,
       adminResolved,
+      adminError,
       unavailable: !supabaseConfigured,
       signInWithDiscord,
       signOut,
     }),
-    [loading, session, isAdmin, adminResolved, signInWithDiscord, signOut],
+    [loading, session, isAdmin, adminResolved, adminError, signInWithDiscord, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
