@@ -76,6 +76,10 @@ create table if not exists public.project_overrides (
   stack      text[],
   github_url text,
   youtube_id text,
+  -- Which diagram the card draws. Null means "unchanged" on a committed card
+  -- and "module trace" on one added here, so a new card is never the only card
+  -- on the page with nothing where the others have a drawing.
+  schematic text,
   sort_order integer,
   visible    boolean not null default true,
   updated_at timestamptz not null default now(),
@@ -87,8 +91,28 @@ create table if not exists public.project_overrides (
   -- A YouTube id is exactly 11 characters of URL-safe base64.
   constraint youtube_id_shape check (youtube_id is null or youtube_id ~ '^[A-Za-z0-9_-]{11}$'),
   constraint github_url_shape check (github_url is null or github_url ~ '^https://github\.com/'),
-  constraint stack_size check (stack is null or array_length(stack, 1) <= 6)
+  constraint stack_size check (stack is null or array_length(stack, 1) <= 6),
+  constraint schematic_kind check (
+    schematic is null
+    or schematic in ('graph', 'grid', 'fanout', 'lattice', 'bands', 'module', 'none')
+  )
 );
+
+-- Added after the table shipped, so an existing database needs this rather than
+-- the column list above. Both are safe to run on a database that already has it.
+alter table public.project_overrides
+  add column if not exists schematic text;
+
+do $$
+begin
+  alter table public.project_overrides
+    add constraint schematic_kind check (
+      schematic is null
+      or schematic in ('graph', 'grid', 'fanout', 'lattice', 'bands', 'module', 'none')
+    );
+exception
+  when duplicate_object then null;
+end $$;
 
 alter table public.project_overrides enable row level security;
 

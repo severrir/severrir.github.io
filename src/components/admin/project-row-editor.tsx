@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
-import type { Project } from "@/data/projects";
+import { SCHEMATIC_CHOICES, type Project, type SchematicKind } from "@/data/projects";
 import type { ProjectOverride } from "@/lib/supabase";
 import { useSound } from "@/lib/useSound";
 import { EASE } from "../ui";
@@ -20,6 +20,8 @@ export type Draft = {
   stack: string;
   githubUrl: string;
   youtubeId: string;
+  /** "" means the card keeps whatever the repository says. */
+  schematic: SchematicKind | "";
   visible: boolean;
 };
 
@@ -35,6 +37,7 @@ export function draftFrom(override: ProjectOverride | null): Draft {
     stack: override?.stack?.join(", ") ?? "",
     githubUrl: override?.github_url ?? "",
     youtubeId: override?.youtube_id ?? "",
+    schematic: (override?.schematic as SchematicKind) ?? "",
     visible: override?.visible ?? true,
   };
 }
@@ -319,6 +322,34 @@ export function ProjectRowEditor({
                     spellCheck={false}
                     className={`${ADMIN_FIELD} font-mono`}
                   />
+                </div>
+
+                <div>
+                  <FieldLabel htmlFor={fieldId("schematic")}>Diagram</FieldLabel>
+                  {/*
+                   * Chosen, never inferred. Each diagram draws one named
+                   * mechanism, so handing a new card whichever one happened to
+                   * be next would make it describe a system it is not. The
+                   * module trace is the answer when none of them fits: it routes
+                   * the card's own parts and claims nothing about them.
+                   */}
+                  <select
+                    id={fieldId("schematic")}
+                    value={draft.schematic}
+                    onChange={(e) =>
+                      onChange({ schematic: e.target.value as SchematicKind | "" })
+                    }
+                    className={ADMIN_FIELD}
+                  >
+                    <option value="">
+                      {added ? "Module trace (default)" : "Unchanged"}
+                    </option>
+                    {SCHEMATIC_CHOICES.map((choice) => (
+                      <option key={choice.value} value={choice.value}>
+                        {choice.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/*

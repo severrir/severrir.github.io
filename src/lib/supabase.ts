@@ -48,6 +48,7 @@ export type ProjectOverride = {
   stack: string[] | null;
   github_url: string | null;
   youtube_id: string | null;
+  schematic: string | null;
   sort_order: number | null;
   visible: boolean;
   updated_at: string;

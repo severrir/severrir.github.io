@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { projects as committedProjects, type Project } from "@/data/projects";
+import {
+  projects as committedProjects,
+  type Project,
+  type SchematicKind,
+} from "@/data/projects";
 import { supabase, type ProjectOverride } from "./supabase";
 
 /**
@@ -16,6 +20,25 @@ import { supabase, type ProjectOverride } from "./supabase";
  * the committed content simply stands. The showcase is never empty.
  */
 
+const KINDS = new Set<SchematicKind>([
+  "graph",
+  "grid",
+  "fanout",
+  "lattice",
+  "bands",
+  "module",
+  "none",
+]);
+
+/**
+ * The column is free text as far as the client is concerned, and a row written
+ * by an older dashboard — or by hand — can hold anything. An unrecognised value
+ * is treated as unset rather than passed through to a lookup that would fail.
+ */
+function asKind(value: string | null | undefined): SchematicKind | undefined {
+  return value && KINDS.has(value as SchematicKind) ? (value as SchematicKind) : undefined;
+}
+
 /** A null column means "not edited", so it must not erase the committed value. */
 function applyOverride(base: Project, override: ProjectOverride): Project {
   const githubUrl = override.github_url ?? base.githubUrl;
@@ -27,6 +50,7 @@ function applyOverride(base: Project, override: ProjectOverride): Project {
     stack: override.stack?.length ? override.stack : base.stack,
     githubUrl,
     youtubeId: override.youtube_id ?? base.youtubeId,
+    schematic: asKind(override.schematic) ?? base.schematic,
   };
 }
 
@@ -49,6 +73,9 @@ export function projectFromOverride(row: ProjectOverride): Project | null {
     stack: row.stack?.length ? row.stack : [],
     githubUrl: row.github_url,
     youtubeId: row.youtube_id,
+    /* An added card has no committed default to fall back on, so an unset
+       column lands on the module trace rather than on nothing. */
+    schematic: asKind(row.schematic) ?? "module",
   };
 }
 

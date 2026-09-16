@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent as ReactPointerEvent, ReactNode, Ref } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
+import type { Project } from "@/data/projects";
 import { EASE } from "../ui";
 
 /**
@@ -1000,21 +1001,138 @@ function StaticLattice({ hostRef }: { hostRef: Ref<HTMLDivElement> }) {
   );
 }
 
-const SCHEMATICS: Record<string, () => ReactNode> = {
-  "roblox-core-framework": BootGraph,
-  "proximity-interaction-sys": BroadphaseGrid,
-  "modular-ui-components": ThemeFanout,
-  "snake-twist-pygame": FixedStepLattice,
-  "backend-matchmaking": WideningBands,
-};
+/* --- Module trace ---------------------------------------------------------
+   The drawing for a project that is not one of the five above.
+
+   A card added from the dashboard used to get nothing here, and next to five
+   cards that each carry a diagram, nothing reads as unfinished. But the other
+   five illustrate a named mechanism, and handing an arbitrary one to a new
+   project would make the card describe a system it is not.
+
+   So this draws only what the card already knows: a routed trace through as
+   many parts as the project lists in its stack, with its repository name under
+   it. The lane each part sits in comes from a hash of the slug, so every
+   project's trace has a silhouette of its own and keeps it across reloads —
+   distinctive without pretending to be a measurement. */
+
+const LANES = [30, 52, 74, 96];
+
+/** FNV-1a. Small, stable, and the same answer on the server and the client. */
+function hash(input: string) {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function ModuleTrace({ slug, parts }: { slug: string; parts: number }) {
+  const [hostRef, inView] = useInView<SVGSVGElement>();
+  const calm = useCalm();
+  const live = inView && !calm;
+
+  const count = Math.min(6, Math.max(4, parts || 4));
+  const seed = hash(slug);
+
+  /* Each part takes a lane the one before it did not, so a short trace still
+     crosses the field instead of running flat through two rows. */
+  const nodes: { x: number; y: number }[] = [];
+  let lane = seed % LANES.length;
+  for (let i = 0; i < count; i++) {
+    if (i > 0) lane = (lane + 1 + ((seed >>> (i * 3)) % (LANES.length - 1))) % LANES.length;
+    nodes.push({ x: 44 + (i * (360 - 44)) / (count - 1), y: LANES[lane] });
+  }
+
+  /* Orthogonal routing: out to the midpoint, across to the next lane, then in.
+     One path, so a single packet can run the whole trace. */
+  const d = nodes
+    .map((node, i) => {
+      if (i === 0) return `M${node.x} ${node.y}`;
+      const prev = nodes[i - 1];
+      const mid = (prev.x + node.x) / 2;
+      return `H${mid} V${node.y} H${node.x}`;
+    })
+    .join(" ");
+
+  return (
+    <Field svgRef={hostRef}>
+      {/* The lanes the trace is routed between — the board under the wiring,
+          so a short trace still sits in a field rather than floating in one. */}
+      {LANES.map((y) => (
+        <motion.path
+          key={y}
+          {...mark}
+          d={`M26 ${y} H394`}
+          stroke={STRUCTURE}
+          strokeOpacity={0.14}
+          strokeWidth={1}
+          strokeDasharray="2 6"
+        />
+      ))}
+
+      <motion.path {...stroke} d={d} stroke={STRUCTURE} strokeOpacity={0.7} strokeWidth={1.2} />
+      {live ? <Pulse d={d} duration={2.4} repeatDelay={0.6} width={2} /> : null}
+
+      {nodes.map((node, i) => {
+        const last = i === nodes.length - 1;
+        return (
+          <motion.rect
+            key={`${node.x}-${node.y}-${i}`}
+            {...stroke}
+            x={node.x - 6}
+            y={node.y - 6}
+            width={12}
+            height={12}
+            rx={2}
+            fill="#04070f"
+            stroke={last ? LIT : STRUCTURE}
+            strokeOpacity={last ? 0.9 : 0.7}
+            strokeWidth={1}
+          />
+        );
+      })}
+      {/* The output carries the champagne, as it does in every other drawing. */}
+      <motion.circle
+        {...mark}
+        cx={nodes[nodes.length - 1].x}
+        cy={nodes[nodes.length - 1].y}
+        r={2}
+        fill={LIT}
+      />
+
+      <motion.path
+        {...stroke}
+        d="M18 114 H392"
+        stroke={STRUCTURE}
+        strokeOpacity={0.3}
+        strokeWidth={1}
+      />
+      <Label x={18} y={128} anchor="start">{slug}</Label>
+    </Field>
+  );
+}
+
+const SCHEMATICS = {
+  graph: BootGraph,
+  grid: BroadphaseGrid,
+  fanout: ThemeFanout,
+  lattice: FixedStepLattice,
+  bands: WideningBands,
+} as const;
 
 /**
- * Renders nothing for a project without a drawing — a row added from the
- * dashboard gets the card without a schematic rather than a placeholder box,
- * which is the honest empty state here.
+ * A card draws the diagram its project names. `none` is the only way to get an
+ * empty column, and it has to be chosen — anything unset falls back to the
+ * module trace, so a card added from the dashboard is never the one card on the
+ * page with a hole where the others have a drawing.
  */
-export function ProjectSchematic({ slug }: { slug: string }) {
-  const Drawing = SCHEMATICS[slug];
-  if (!Drawing) return null;
+export function ProjectSchematic({ project }: { project: Project }) {
+  const kind = project.schematic ?? "module";
+  if (kind === "none") return null;
+  if (kind === "module") {
+    return <ModuleTrace slug={project.slug} parts={project.stack.length} />;
+  }
+  const Drawing = SCHEMATICS[kind];
   return <Drawing />;
 }

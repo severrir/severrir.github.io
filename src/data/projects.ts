@@ -1,3 +1,31 @@
+/**
+ * Which diagram a card draws.
+ *
+ * Each drawing illustrates one specific mechanism, so this is a choice and
+ * never an automatic one: a broadphase grid under a datastore module would make
+ * the card assert something untrue. A project that fits none of them takes
+ * `module`, which routes only its own parts and claims nothing about them.
+ */
+export type SchematicKind =
+  | "graph"
+  | "grid"
+  | "fanout"
+  | "lattice"
+  | "bands"
+  | "module"
+  | "none";
+
+/** What each option draws, in the dashboard's own words. */
+export const SCHEMATIC_CHOICES: { value: SchematicKind; label: string }[] = [
+  { value: "module", label: "Module trace — routing, for anything" },
+  { value: "graph", label: "Dependency graph resolving into a lifecycle" },
+  { value: "grid", label: "Spatial grid with a live neighbourhood" },
+  { value: "fanout", label: "One source driving several surfaces" },
+  { value: "lattice", label: "Playable lattice on a fixed timestep" },
+  { value: "bands", label: "Bands widening over a scrubbed timeline" },
+  { value: "none", label: "No diagram" },
+];
+
 export type Project = {
   slug: string;
   title: string;
@@ -5,6 +33,7 @@ export type Project = {
   stack: string[];
   githubUrl: string;
   youtubeId: string;
+  schematic?: SchematicKind;
 };
 
 export const projects: Project[] = [
@@ -16,6 +45,7 @@ export const projects: Project[] = [
     stack: ["Luau", "Roblox", "Architecture"],
     githubUrl: "https://github.com/severrir/roblox-core-framework",
     youtubeId: "LXb3EKWsInQ",
+    schematic: "graph",
   },
   {
     slug: "proximity-interaction-sys",
@@ -25,6 +55,7 @@ export const projects: Project[] = [
     stack: ["Luau", "Roblox", "Systems"],
     githubUrl: "https://github.com/severrir/proximity-interaction-sys",
     youtubeId: "V-_O7nl0Ii0",
+    schematic: "grid",
   },
   {
     slug: "modular-ui-components",
@@ -34,6 +65,7 @@ export const projects: Project[] = [
     stack: ["Luau", "Roblox", "Interface"],
     githubUrl: "https://github.com/severrir/modular-ui-components",
     youtubeId: "ScMzIvxBSi4",
+    schematic: "fanout",
   },
   {
     slug: "snake-twist-pygame",
@@ -43,6 +75,7 @@ export const projects: Project[] = [
     stack: ["Python", "Pygame", "Game design"],
     githubUrl: "https://github.com/severrir/snake-twist-pygame",
     youtubeId: "qN3OueBm9F4",
+    schematic: "lattice",
   },
   {
     slug: "backend-matchmaking",
@@ -52,5 +85,6 @@ export const projects: Project[] = [
     stack: ["Backend", "Matchmaking", "Systems"],
     githubUrl: "https://github.com/severrir/backend-matchmaking",
     youtubeId: "9bZkp7q19f0",
+    schematic: "bands",
   },
 ];

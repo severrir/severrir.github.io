@@ -160,6 +160,7 @@ export function ContentPanel() {
         : null,
       github_url: orNull(row.draft.githubUrl),
       youtube_id: orNull(row.draft.youtubeId),
+      schematic: orNull(row.draft.schematic),
       visible: row.draft.visible,
       // Keep the position this row is currently shown in, so a first save does
       // not silently send the card back to its committed slot.

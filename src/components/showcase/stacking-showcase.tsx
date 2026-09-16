@@ -139,7 +139,7 @@ function ProjectCard({
               is the reason the copy sits at the top of the card rather than
               floating in the middle of it. */}
           <div className="mt-8 flex flex-1 items-center py-1">
-            <ProjectSchematic slug={project.slug} />
+            <ProjectSchematic project={project} />
           </div>
 
           {/* A rule, not a gap. The description is the claim and the row below
