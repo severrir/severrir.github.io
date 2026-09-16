@@ -239,16 +239,25 @@ $$;
 -- ============================================================================
 -- Final step, once and by hand.
 --
--- Sign in on the site with Discord first so the account exists, then run:
+-- Sign in on the site with Discord first so the account exists. Then take your
+-- Discord account id (Discord Settings -> Advanced -> Developer Mode, then
+-- right-click your name -> Copy User ID) and run:
 --
 --   insert into public.admins (user_id)
---   select id from auth.users
---   order by created_at asc
---   limit 1
+--   select u.id
+--   from auth.users u
+--   join auth.identities i on i.user_id = u.id
+--   where i.provider = 'discord'
+--     and i.provider_id = 'YOUR_DISCORD_USER_ID'
 --   on conflict do nothing;
 --
--- That promotes the first account created, which will be yours. Confirm with:
+-- Matched on the Discord id rather than on whichever row in auth.users is
+-- oldest: the oldest row is only yours until someone else signs in first.
+-- Confirm with:
 --
---   select u.email, u.raw_user_meta_data ->> 'full_name' as discord, a.added_at
---   from public.admins a join auth.users u on u.id = a.user_id;
+--   select u.raw_user_meta_data ->> 'user_name' as discord_handle,
+--          i.provider_id as discord_id, a.added_at
+--   from public.admins a
+--   join auth.users u      on u.id = a.user_id
+--   join auth.identities i on i.user_id = u.id and i.provider = 'discord';
 -- ============================================================================

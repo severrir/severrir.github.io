@@ -92,22 +92,39 @@ working.
 
 ## 6. Make yourself the admin
 
-Sign in on the live site with Discord once, so the account exists. Then in the
-**SQL Editor**:
+Sign in on the site with Discord once, so the account exists. Then find your
+Discord account id — Discord **Settings → Advanced → Developer Mode** on, then
+right-click your own name and **Copy User ID**. In the **SQL Editor**:
 
 ```sql
 insert into public.admins (user_id)
-select id from auth.users order by created_at asc limit 1
+select u.id
+from auth.users u
+join auth.identities i on i.user_id = u.id
+where i.provider = 'discord'
+  and i.provider_id = 'YOUR_DISCORD_USER_ID'
 on conflict do nothing;
 ```
 
-That promotes the oldest account, which will be yours if you signed in first.
+Matching on the Discord id promotes exactly one known account. The obvious
+alternative — promoting the oldest row in `auth.users` — hands the dashboard to
+whoever signed in first, which stops being you the moment someone else beats
+you to it.
+
 Check it took:
 
 ```sql
-select u.raw_user_meta_data ->> 'full_name' as discord, a.added_at
-from public.admins a join auth.users u on u.id = a.user_id;
+select
+  u.raw_user_meta_data ->> 'user_name' as discord_handle,
+  i.provider_id                        as discord_id,
+  a.added_at
+from public.admins a
+join auth.users u      on u.id = a.user_id
+join auth.identities i on i.user_id = u.id and i.provider = 'discord';
 ```
+
+One row means the dashboard will open. No rows means the sign-in has not
+happened yet, or the id does not match — sign in, then run the insert again.
 
 Reload the site. The avatar in the header now has a **Dashboard** entry, and
 `/admin` opens.
