@@ -37,6 +37,25 @@ type AuthState = {
 const AuthContext = createContext<AuthState | null>(null);
 
 /**
+ * Supabase's auth errors are written for whoever configured the project, not
+ * for whoever is trying to send a commission request. The two below are the
+ * ones a visitor can actually provoke — a provider that was never switched on,
+ * and a redirect URL that does not match — and both mean the same thing from
+ * their side: this is broken here, not something you did. Anything unrecognised
+ * is passed through rather than flattened, because a message I have not seen
+ * before is more useful verbatim than replaced with a shrug.
+ */
+function readableAuthError(message: string): string {
+  if (/provider is not enabled|unsupported provider/i.test(message)) {
+    return "Discord sign-in is not switched on for this site yet.";
+  }
+  if (/redirect|invalid request.*url/i.test(message)) {
+    return "Discord could not return you to this page.";
+  }
+  return message;
+}
+
+/**
  * Discord's handle arrives under a different key depending on how the account
  * was set up, so read them in order of how close each is to the @handle the
  * owner would actually type into a Discord search.
@@ -167,7 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
 
-    return { error: error ? error.message : null };
+    return { error: error ? readableAuthError(error.message) : null };
   }, []);
 
   const signOut = useCallback(async () => {
@@ -210,5 +229,7 @@ export function takeAuthReturnPath(): string {
   } catch {
     // Fall through to the default.
   }
-  return "/booking";
+  /* Trailing slash because trailingSlash:true is what the exported routes are
+     named, and this value can end up in the address bar on a hard reload. */
+  return "/booking/";
 }
