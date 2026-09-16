@@ -9,11 +9,11 @@ import { EASE } from "../ui";
 import { SpinningBorderButton } from "../ui/spinning-border-button";
 
 /**
- * The gate in front of the booking form.
+ * The gate in front of the dashboard.
  *
- * It deliberately occupies the same frame the form does — same width, same
- * radius, same padding, same glass — so signing in and sending a request happen
- * in one place rather than on two different-looking screens.
+ * The booking form no longer uses it — there the brief is written first and
+ * Discord is asked for at the moment of sending. This is the other case: a page
+ * with nothing on it at all until it knows who is asking.
  *
  * The mark is monochrome and the button is the site's own primary treatment.
  * A blurple Discord button would put a second saturated accent on a page built
@@ -110,43 +110,5 @@ export function SignInPanel({ returnTo = "/booking" }: { returnTo?: string }) {
     >
       {content}
     </motion.div>
-  );
-}
-
-/**
- * Held while the session is still being restored. Same frame and the same first
- * line of text, so when the real panel or the form replaces it nothing jumps —
- * only the body below the heading changes.
- */
-export function SignInPanelSkeleton() {
-  return (
-    <div className={FRAME} role="status" aria-label="Checking your session">
-      <div aria-hidden="true" data-js-only>
-        <div className="h-7 w-[22ch] max-w-full rounded-sm bg-white/[0.06]" />
-        <div className="mt-6 space-y-3">
-          <div className="h-4 w-full max-w-[52ch] rounded-sm bg-white/[0.04]" />
-          <div className="h-4 w-full max-w-[44ch] rounded-sm bg-white/[0.04]" />
-        </div>
-        <div className="mt-10 h-[3.25rem] w-[16rem] max-w-full rounded-md bg-white/[0.05]" />
-      </div>
-
-      {/*
-       * This placeholder is what the exported HTML contains, so without
-       * JavaScript it is all anyone would ever see. Signing in genuinely cannot
-       * work without it, so say that and give a route that does work rather
-       * than leaving three grey bars on the page.
-       */}
-      <noscript>
-        {/* The placeholder bars are waiting for something that is never going
-            to arrive, so they go rather than sit above the message. */}
-        <style>{"[data-js-only]{display:none}"}</style>
-        <p className="pretty max-w-[56ch] font-light leading-relaxed text-text-2">
-          Sending a request needs JavaScript, because it signs you in with
-          Discord first. With it switched off, message me directly on Discord as{" "}
-          <span className="font-mono text-text">severrir</span> — same reply,
-          same day.
-        </p>
-      </noscript>
-    </div>
   );
 }
