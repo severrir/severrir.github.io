@@ -119,36 +119,23 @@ function ProjectCard({
         className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/45 to-transparent"
       />
 
-      {/*
-       * No gap and no padding on the grid itself. The demo is bled to the
-       * card's own edges and takes its full height, so the card is one object
-       * with two halves rather than a panel holding a picture at arm's length.
-       * Only the type block is inset.
-       */}
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.06fr)]">
-        <div className="flex min-w-0 flex-col justify-center p-7 sm:p-10 lg:py-14 lg:pl-12 lg:pr-10">
-          {/* The card opens on the title, at display size. A repository path in
-              monospace stood here — an eyebrow above the heading, which the
-              heading never needed; the repository is one click below it. */}
-          <h3 className="balance font-serif text-[length:var(--title)] font-light leading-[1.08] tracking-[-0.022em]">
+      <div className="grid gap-8 p-7 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-14">
+        <div className="flex min-w-0 flex-col justify-center">
+          {/* The card opens on the title. What stood here was a repository path
+              in monospace — an eyebrow above the heading, which the heading
+              never needed; the repository is one click away under it. */}
+          <h3 className="font-serif text-[length:var(--heading)] font-light leading-tight tracking-[-0.015em]">
             {project.title}
           </h3>
 
-          {/* The one champagne mark on the card, and it does structural work:
-              it closes the title and opens the description. */}
-          <span
-            aria-hidden="true"
-            className="mt-6 block h-px w-16 bg-gradient-to-r from-gold/80 to-gold/0"
-          />
-
-          <p className="pretty mt-6 max-w-[42ch] text-[0.9375rem] font-light leading-relaxed text-text-2">
+          <p className="pretty mt-5 max-w-[46ch] text-[0.9375rem] font-light leading-relaxed text-text-2">
             {project.summary}
           </p>
 
           {/* A rule, not a gap. The description is the claim and the row below
               is what you do about it; separated, the column reads as two
               things instead of one run of text that happens to end in tags. */}
-          <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-7">
+          <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-7">
             <a
               href={project.githubUrl}
               target="_blank"
@@ -172,48 +159,15 @@ function ProjectCard({
           </div>
         </div>
 
-        <div className="relative min-w-0">
+        {/* The demo is set into the card rather than laid on top of it. The
+            padding is the lip of the recess; without it the thumbnail meets
+            the well's edge and the depth disappears. */}
+        <div className="card-well min-w-0 rounded-lg p-2">
           <VideoFacade
             youtubeId={project.youtubeId}
             title={project.title}
             githubUrl={project.githubUrl}
             priority={index === 0}
-            fill
-          />
-
-          {/*
-           * The seam. A bled image meeting a coloured panel on a hard vertical
-           * line is the thing that makes a composite look pasted together; the
-           * card's own colour running out over the image dissolves that line,
-           * and the image appears to be lit by the same room as the card.
-           */}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 hidden lg:block"
-            style={{
-              background:
-                "linear-gradient(to right, #101d40 0%, rgb(16 29 64 / 0.75) 7%, rgb(16 29 64 / 0) 26%)",
-            }}
-          />
-
-          {/*
-           * The same seam along the top edge, and it earns its place twice. It
-           * keeps the image off the lit bevel, which it would otherwise butt
-           * straight into — and in the stack only the top strip of each card
-           * behind is visible, so without this the pile reads as a row of
-           * bright coloured bands instead of layered cards.
-           */}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 hidden h-24 lg:block"
-            style={{
-              background:
-                "linear-gradient(to bottom, #17294f 0%, rgb(20 38 78 / 0.7) 30%, rgb(20 38 78 / 0) 100%)",
-            }}
-          />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0b1530] to-transparent lg:hidden"
           />
         </div>
       </div>
@@ -227,7 +181,7 @@ function ProjectCard({
   return (
     <div className="sticky top-24 flex min-h-[74svh] items-center justify-center">
       <motion.div
-        style={{ scale, top: `${index * 18}px` }}
+        style={{ scale, top: `${index * 24}px` }}
         className="relative w-full origin-top"
       >
         {card}
