@@ -42,25 +42,41 @@ export function SignInPanel({ returnTo = "/booking" }: { returnTo?: string }) {
   const content = (
     <div className={FRAME}>
       <h2 className="balance max-w-[24ch] font-serif text-[length:var(--heading)] font-light leading-[1.15] tracking-[-0.02em]">
-        Requests come from a Discord account.
+        {unavailable
+          ? "Message me on Discord."
+          : "Requests come from a Discord account."}
       </h2>
 
+      {/* When sign-in cannot run there is no form to describe, so the panel
+          stops explaining a door that will not open and gives the route that
+          does work instead. */}
       <p className="pretty mt-5 max-w-[56ch] font-light leading-relaxed text-text-2">
-        Sign in with Discord and the form opens. It confirms where the reply
-        should go, keeps your request attached to you rather than to an inbox,
-        and means neither of us has to check a username was typed correctly.
+        {unavailable ? (
+          <>
+            The request form is being reconnected. Commissions are still open —
+            send me the project and what needs building, and you get
+            feasibility, timeline and price back the same way.
+          </>
+        ) : (
+          <>
+            Sign in with Discord and the form opens. It confirms where the reply
+            should go, keeps your request attached to you rather than to an
+            inbox, and means neither of us has to check a username was typed
+            correctly.
+          </>
+        )}
       </p>
 
-      <div className="mt-10">
-        <SpinningBorderButton
-          type="button"
-          onClick={onSignIn}
-          disabled={pending || unavailable}
-        >
-          <DiscordMark className="size-4" />
-          {pending ? "Opening Discord" : "Continue with Discord"}
-        </SpinningBorderButton>
-      </div>
+      {unavailable ? (
+        <p className="mt-8 font-mono text-[length:var(--lead)] text-text">severrir</p>
+      ) : (
+        <div className="mt-10">
+          <SpinningBorderButton type="button" onClick={onSignIn} disabled={pending}>
+            <DiscordMark className="size-4" />
+            {pending ? "Opening Discord" : "Continue with Discord"}
+          </SpinningBorderButton>
+        </div>
+      )}
 
       {error ? (
         <p
@@ -72,22 +88,12 @@ export function SignInPanel({ returnTo = "/booking" }: { returnTo?: string }) {
         </p>
       ) : null}
 
-      {unavailable ? (
-        <p
-          role="status"
-          className="mt-5 flex items-start gap-2 text-sm font-light text-gold"
-        >
-          <CircleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-          Sign-in is not connected yet. Reach me on Discord as severrir in the
-          meantime.
-        </p>
-      ) : null}
-
       {/* Rhymes with the form's own footer rule, so the two panels read as the
           same object in two states rather than two designs. */}
       <p className="mt-10 border-t border-rule pt-8 text-sm font-light text-text-2">
-        Discord gives me your username and nothing else. No password is created
-        here and no payment is taken.
+        {unavailable
+          ? "No payment is taken here, and nothing is agreed until you have a price."
+          : "Discord gives me your username and nothing else. No password is created here and no payment is taken."}
       </p>
     </div>
   );

@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useForm, ValidationError } from "@formspree/react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Check, CircleAlert } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 import { tiers } from "@/data/pricing";
 import { containsProfanity, PROFANITY_MESSAGE } from "@/lib/profanity";
-import { DISCORD_MESSAGE, isValidDiscord, normalizeDiscord } from "@/lib/discord";
 import { useAuth, discordHandleOf, displayNameOf } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { playSound, useSound } from "@/lib/useSound";
@@ -45,43 +45,98 @@ function Label({
 }
 
 /**
- * Sending a commission request needs an account, so this decides which of three
- * things occupies the form's frame: a placeholder while the session is read,
- * the sign-in panel, or the form itself. All three are the same width and the
+ * Sending a commission request requires an account, with no way round it.
+ *
+ * Three things can occupy the form's frame: a placeholder while the session is
+ * read, the sign-in panel, or the form. All three are the same width on the
  * same surface, so the page does not rearrange itself underneath anyone.
+ *
+ * There is deliberately no unauthenticated path. Before Supabase is configured
+ * the sign-in panel says so and points at Discord, so there is still a way to
+ * reach severrir — but the form itself never opens without an account.
  */
 export function BookingForm() {
-  const { loading, user, unavailable } = useAuth();
-
-  /*
-   * With no Supabase project configured there is no sign-in to require, so the
-   * form stays open exactly as it was before accounts existed. Gating it would
-   * mean the site could not take a commission at all between deploying this and
-   * finishing SETUP.md — a closed door where there used to be a form.
-   *
-   * This is a build-time condition, not a runtime one: if the project is
-   * configured but paused or unreachable, the gate still holds.
-   */
-  if (unavailable) return <CommissionForm />;
+  const { loading, user } = useAuth();
 
   if (loading) return <SignInPanelSkeleton />;
   if (!user) return <SignInPanel returnTo="/booking" />;
-  return <CommissionForm />;
+  return <CommissionForm user={user} />;
 }
 
-function CommissionForm() {
-  const [state, handleSubmit] = useForm("xgojkepa");
-  const { user } = useAuth();
+/**
+ * Who the request is from, stated rather than asked for.
+ *
+ * This replaces the Discord username field entirely. Discord already told us
+ * the handle when the account was connected, and a value it vouched for beats
+ * one typed from memory — which is also why the shape validation that guarded
+ * that field is gone rather than moved.
+ */
+function AccountStrip({ user }: { user: User }) {
+  const { signOut } = useAuth();
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const sound = useSound();
-  const reduced = useReducedMotion();
+
+  const handle = discordHandleOf(user);
+  const avatar =
+    typeof user.user_metadata?.avatar_url === "string"
+      ? user.user_metadata.avatar_url
+      : null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-rule pb-7">
+      <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full border border-edge-gold bg-bg-2 text-sm text-text-2">
+        {avatar && !avatarFailed ? (
+          /* eslint-disable-next-line @next/next/no-img-element -- a 40px
+             third-party avatar gains nothing from the optimizer, which is
+             disabled under output:"export" anyway. */
+          <img
+            src={avatar}
+            alt=""
+            width={40}
+            height={40}
+            decoding="async"
+            onError={() => setAvatarFailed(true)}
+            className="size-full object-cover"
+          />
+        ) : (
+          <span aria-hidden="true">
+            {(displayNameOf(user)[0] ?? "?").toUpperCase()}
+          </span>
+        )}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-mono text-sm text-text">{handle}</span>
+        <span className="mt-0.5 block text-xs font-light text-text-2">
+          The reply goes to this Discord account.
+        </span>
+      </span>
+
+      <button
+        type="button"
+        onClick={() => void signOut()}
+        className="text-sm font-light text-text-2 underline decoration-rule-strong underline-offset-4 transition-colors duration-200 hover:text-text"
+        {...sound}
+      >
+        Not you?
+      </button>
+
+      {/* Formspree still delivers the ping to Discord, so the handle has to
+          travel with the submission even though it is no longer a field. */}
+      <input type="hidden" name="discord" value={handle} readOnly />
+    </div>
+  );
+}
+
+function CommissionForm({ user }: { user: User }) {
+  const [state, handleSubmit] = useForm("xgojkepa");
+  const sound = useSound();
 
   const accountHandle = discordHandleOf(user);
 
   const [tier, setTier] = useState("system");
-  const [discord, setDiscord] = useState(accountHandle);
   const [scope, setScope] = useState("");
   const [blocked, setBlocked] = useState<string | null>(null);
-  const [discordError, setDiscordError] = useState<string | null>(null);
 
   /*
    * Everything the database record needs, captured at the moment of submit.
@@ -159,21 +214,14 @@ function CommissionForm() {
           back to you shortly.
         </p>
         <p className="mt-5 text-sm font-light text-text-2">
-          Expect a reply on Discord as {discord.trim() || "the username you gave"}.
+          Expect a reply on Discord as{" "}
+          <span className="font-mono text-text">{accountHandle}</span>.
         </p>
       </motion.div>
     );
   }
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-    if (!isValidDiscord(discord)) {
-      event.preventDefault();
-      setDiscordError(DISCORD_MESSAGE);
-      document.getElementById("discord")?.focus();
-      return;
-    }
-    setDiscordError(null);
-
     if (containsProfanity(scope)) {
       event.preventDefault();
       setBlocked(PROFANITY_MESSAGE);
@@ -186,10 +234,10 @@ function CommissionForm() {
     const typedName = (form.elements.namedItem("name") as HTMLInputElement)?.value ?? "";
 
     submitted.current = {
-      userId: user?.id ?? "",
+      userId: user.id,
       name: typedName.trim() || displayNameOf(user) || "Unnamed",
       email: (form.elements.namedItem("email") as HTMLInputElement)?.value ?? "",
-      discord: normalizeDiscord(discord) || accountHandle,
+      discord: accountHandle,
       tier,
       message: scope,
     };
@@ -199,6 +247,8 @@ function CommissionForm() {
 
   return (
     <form onSubmit={onSubmit} className="specular mx-auto max-w-3xl space-y-8 rounded-lg p-7 sm:p-12">
+      <AccountStrip user={user} />
+
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
           <Label htmlFor="name">What should I call you?</Label>
@@ -214,68 +264,25 @@ function CommissionForm() {
         </div>
 
         <div>
-          <Label htmlFor="discord">Discord username</Label>
+          <Label htmlFor="email" optional>
+            Email
+          </Label>
           <input
-            id="discord"
-            name="discord"
-            required
-            value={discord}
-            onChange={(e) => {
-              setDiscord(e.target.value);
-              if (discordError) setDiscordError(null);
-            }}
-            onBlur={(e) => {
-              // Normalise what was pasted, then judge it. Empty stays silent —
-              // that is the required attribute's job, not a validation error.
-              const value = normalizeDiscord(e.target.value);
-              setDiscord(value);
-              setDiscordError(!value || isValidDiscord(value) ? null : DISCORD_MESSAGE);
-            }}
-            aria-invalid={discordError ? true : undefined}
-            aria-describedby={
-              discordError ? "discord-error" : accountHandle ? "discord-source" : undefined
-            }
-            placeholder="sam.dev"
+            id="email"
+            type="email"
+            name="email"
+            autoComplete="email"
+            defaultValue={user.email ?? ""}
+            placeholder="sam@studio.com"
             className={FIELD}
           />
-          {discordError ? (
-            <p
-              id="discord-error"
-              role="alert"
-              className="mt-2 flex items-start gap-2 text-sm font-light text-gold"
-            >
-              <CircleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-              {discordError}
-            </p>
-          ) : accountHandle ? (
-            <p id="discord-source" className="mt-2 text-xs font-light text-text-2">
-              {discord === accountHandle
-                ? "From your Discord account. Change it to be replied to somewhere else."
-                : `Your account is ${accountHandle}.`}
-            </p>
-          ) : null}
+          <ValidationError
+            prefix="Email"
+            field="email"
+            errors={state.errors}
+            className="mt-2 block text-sm text-gold"
+          />
         </div>
-      </div>
-
-      <div>
-        <Label htmlFor="email" optional>
-          Email
-        </Label>
-        <input
-          id="email"
-          type="email"
-          name="email"
-          autoComplete="email"
-          defaultValue={user?.email ?? ""}
-          placeholder="sam@studio.com"
-          className={FIELD}
-        />
-        <ValidationError
-          prefix="Email"
-          field="email"
-          errors={state.errors}
-          className="mt-2 block text-sm text-gold"
-        />
       </div>
 
       <fieldset>
@@ -296,7 +303,7 @@ function CommissionForm() {
               >
                 {active ? (
                   <motion.span
-                    layoutId={reduced ? undefined : "booking-tier-pill"}
+                    layoutId="booking-tier-pill"
                     transition={{ duration: 0.45, ease: EASE }}
                     className="absolute inset-0 rounded-full border border-edge-gold-strong bg-gradient-to-b from-white/[0.14] to-white/[0.02] shadow-[inset_0_1px_0_0_rgb(255_255_255_/_0.18)]"
                   />
