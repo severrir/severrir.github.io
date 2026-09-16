@@ -43,6 +43,15 @@ as $$
   select exists (select 1 from public.admins a where a.user_id = auth.uid());
 $$;
 
+/*
+ * Only signed-in callers ever evaluate this. Every policy that calls it is
+ * granted to `authenticated`, so leaving EXECUTE on PUBLIC would hand an
+ * anonymous caller a security definer function it has no use for. Narrow it to
+ * the one role that needs it.
+ */
+revoke execute on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
+
 drop policy if exists "admins read own membership" on public.admins;
 create policy "admins read own membership"
   on public.admins for select to authenticated
@@ -88,11 +97,30 @@ create policy "anyone reads project overrides"
   on public.project_overrides for select to anon, authenticated
   using (true);
 
+/*
+ * Written as three policies rather than one FOR ALL. A FOR ALL policy also
+ * covers SELECT, which would sit alongside the public read policy above and
+ * make Postgres evaluate both on every read for a signed-in visitor — for a
+ * result that cannot change, since the read policy already returns true. The
+ * split leaves exactly one policy per action.
+ */
 drop policy if exists "only the owner writes project overrides" on public.project_overrides;
-create policy "only the owner writes project overrides"
-  on public.project_overrides for all to authenticated
+
+drop policy if exists "only the owner adds project overrides" on public.project_overrides;
+create policy "only the owner adds project overrides"
+  on public.project_overrides for insert to authenticated
+  with check (public.is_admin());
+
+drop policy if exists "only the owner edits project overrides" on public.project_overrides;
+create policy "only the owner edits project overrides"
+  on public.project_overrides for update to authenticated
   using (public.is_admin())
   with check (public.is_admin());
+
+drop policy if exists "only the owner removes project overrides" on public.project_overrides;
+create policy "only the owner removes project overrides"
+  on public.project_overrides for delete to authenticated
+  using (public.is_admin());
 
 create or replace function public.touch_updated_at()
 returns trigger
@@ -138,17 +166,27 @@ create table if not exists public.bookings (
 
 create index if not exists bookings_created_at_idx on public.bookings (created_at desc);
 
+/* Covers the foreign key to auth.users, which every policy below also filters
+   on. Without it, deleting an account has to scan this table. */
+create index if not exists bookings_user_id_idx on public.bookings (user_id);
+
 alter table public.bookings enable row level security;
 
+/*
+ * auth.uid() is wrapped in a subselect throughout. Called bare, Postgres treats
+ * it as volatile per row and re-runs it for every row the policy examines;
+ * wrapped, it is evaluated once and the result compared against the column.
+ * Same rule, one call instead of one per row.
+ */
 drop policy if exists "signed-in visitors file their own request" on public.bookings;
 create policy "signed-in visitors file their own request"
   on public.bookings for insert to authenticated
-  with check (user_id = auth.uid());
+  with check (user_id = (select auth.uid()));
 
 drop policy if exists "read own requests, owner reads all" on public.bookings;
 create policy "read own requests, owner reads all"
   on public.bookings for select to authenticated
-  using (user_id = auth.uid() or public.is_admin());
+  using (user_id = (select auth.uid()) or public.is_admin());
 
 drop policy if exists "only the owner marks requests handled" on public.bookings;
 create policy "only the owner marks requests handled"
@@ -179,6 +217,14 @@ begin
   return new;
 end;
 $$;
+
+/*
+ * A trigger function is invoked by the trigger, not called by the client, and
+ * Postgres checks EXECUTE when the trigger is created rather than when it
+ * fires. Nobody therefore needs this grant, and a security definer function
+ * that can be called directly is worth one line to close.
+ */
+revoke execute on function public.bookings_rate_limit() from public, anon, authenticated;
 
 drop trigger if exists bookings_rate_limit_check on public.bookings;
 create trigger bookings_rate_limit_check
@@ -235,6 +281,12 @@ begin
     from public.visitors v;
 end;
 $$;
+
+/* The body already refuses anyone who is not the owner, so this is the second
+   of two locks rather than the only one. An anonymous caller cannot be the
+   owner by definition, and now cannot reach the function at all. */
+revoke execute on function public.visitor_stats() from public, anon;
+grant execute on function public.visitor_stats() to authenticated;
 
 -- ============================================================================
 -- Final step, once and by hand.
