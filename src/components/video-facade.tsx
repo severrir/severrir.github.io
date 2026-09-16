@@ -27,18 +27,23 @@ export function VideoFacade({
   title,
   githubUrl,
   priority = false,
+  fill = false,
 }: {
   youtubeId: string;
   title: string;
   githubUrl: string;
   priority?: boolean;
+  /** Fill the pane instead of holding 16:9 — used where the demo is bled to
+      the card edge and has to take the card height. */
+  fill?: boolean;
 }) {
   const [playing, setPlaying] = useState(false);
   const [stage, setStage] = useState<Stage>("maxres");
   const sound = useSound();
 
-  const frame =
-    "relative aspect-video w-full overflow-hidden rounded-md border border-rule bg-bg-2";
+  const frame = fill
+    ? "relative aspect-video w-full overflow-hidden bg-bg-2 lg:aspect-auto lg:h-full"
+    : "relative aspect-video w-full overflow-hidden rounded-md border border-rule bg-bg-2";
 
   if (playing) {
     return (
