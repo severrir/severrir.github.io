@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { projects as committedProjects, type Project } from "@/data/projects";
 import { supabase, type ProjectOverride } from "@/lib/supabase";
 import { playSound } from "@/lib/useSound";
+import { Plus } from "lucide-react";
 import { MorphLoader } from "../ui/morph-loader";
-import { PanelHeading } from "./primitives";
+import { AdminButton, PanelHeading } from "./primitives";
 import {
   ProjectRowEditor,
   draftFrom,
@@ -18,10 +19,30 @@ type Status = { kind: "saved" | "error"; message: string } | null;
 type Row = {
   base: Project;
   override: ProjectOverride | null;
+  /** True when the row is a card that exists only in the database. */
+  added: boolean;
   draft: Draft;
   saving: boolean;
   status: Status;
 };
+
+/**
+ * The stand-in base for an added card. Every committed field is empty, which is
+ * exactly right: there is nothing to fall back to, so the editor's placeholders
+ * ask for values rather than offering them, and a blank field is an error
+ * rather than a default.
+ */
+function stubBase(slug: string): Project {
+  return {
+    slug,
+    repo: "",
+    title: "Untitled card",
+    summary: "",
+    stack: [],
+    githubUrl: "",
+    youtubeId: "",
+  };
+}
 
 function isDirty(row: Row): boolean {
   const saved = draftFrom(row.override);
@@ -36,16 +57,41 @@ function orNull(value: string): string | null {
 
 function buildRows(overrides: ProjectOverride[]): Row[] {
   const bySlug = new Map(overrides.map((row) => [row.slug, row]));
+  const committed = new Set(committedProjects.map((project) => project.slug));
 
-  return committedProjects
-    .map((base, index) => {
-      const override = bySlug.get(base.slug) ?? null;
-      return { base, override, order: override?.sort_order ?? index, index };
-    })
-    .sort((a, b) => a.order - b.order || a.index - b.index)
-    .map(({ base, override }) => ({
+  const fromRepo = committedProjects.map((base, index) => {
+    const override = bySlug.get(base.slug) ?? null;
+    return {
       base,
       override,
+      added: false,
+      order: override?.sort_order ?? index,
+      index,
+    };
+  });
+
+  /* Rows with no committed counterpart are cards added from here. They sort
+     after the repository's own by default, and are listed even when they are
+     still blank — an unfinished card has to be reachable to be finished. */
+  const fromDatabase = overrides
+    .filter((override) => !committed.has(override.slug))
+    .map((override, offset) => {
+      const index = committedProjects.length + offset;
+      return {
+        base: stubBase(override.slug),
+        override,
+        added: true,
+        order: override.sort_order ?? index,
+        index,
+      };
+    });
+
+  return [...fromRepo, ...fromDatabase]
+    .sort((a, b) => a.order - b.order || a.index - b.index)
+    .map(({ base, override, added }) => ({
+      base,
+      override,
+      added,
       draft: draftFrom(override),
       saving: false,
       status: null,
@@ -58,6 +104,8 @@ export function ContentPanel() {
   const [rows, setRows] = useState<Row[] | null>(() => (supabase ? null : buildRows([])));
   const [loadError, setLoadError] = useState<string | null>(null);
   const [orderStatus, setOrderStatus] = useState<Status>(null);
+  const [addStatus, setAddStatus] = useState<Status>(null);
+  const [adding, setAdding] = useState(false);
 
   const patchRow = useCallback((slug: string, patch: Partial<Row>) => {
     setRows((current) =>
@@ -96,7 +144,7 @@ export function ContentPanel() {
     const row = rows[index];
     if (!row) return;
 
-    const problem = validateDraft(row.draft);
+    const problem = validateDraft(row.draft, row.added);
     if (problem) {
       patchRow(slug, { status: { kind: "error", message: problem } });
       return;
@@ -139,8 +187,18 @@ export function ContentPanel() {
     });
   };
 
+  /*
+   * Deleting the row is the same call for both kinds of card and means two
+   * different things, which is why the list is rebuilt differently afterwards.
+   * For a committed card the row was only ever a set of edits, so removing it
+   * leaves the card standing as the repository wrote it. For an added card the
+   * row *was* the card, so removing it removes the card from the list too.
+   */
   const onReset = async (slug: string) => {
-    if (!supabase) return;
+    if (!supabase || !rows) return;
+
+    const row = rows.find((entry) => entry.base.slug === slug);
+    if (!row) return;
 
     patchRow(slug, { saving: true, status: null });
     const { error } = await supabase.from("project_overrides").delete().eq("slug", slug);
@@ -150,12 +208,64 @@ export function ContentPanel() {
       return;
     }
 
+    playSound("success");
+
+    if (row.added) {
+      setRows((current) => current?.filter((entry) => entry.base.slug !== slug) ?? current);
+      return;
+    }
+
     patchRow(slug, {
       saving: false,
       override: null,
       draft: draftFrom(null),
       status: { kind: "saved", message: "Reset. This card shows what the repository says." },
     });
+  };
+
+  /*
+   * A new card is written to the database immediately rather than held as a
+   * local draft, so it has a slug — the primary key everything else here is
+   * addressed by — before anything can be typed into it. It starts hidden,
+   * because an empty card that appeared on the homepage the moment it was
+   * created would be a worse default than one that has to be published.
+   */
+  const onAdd = async () => {
+    if (!supabase || !rows) return;
+
+    setAddStatus(null);
+    setAdding(true);
+
+    const slug = `card-${Date.now().toString(36)}`;
+    const { data, error } = await supabase
+      .from("project_overrides")
+      .insert({ slug, visible: false, sort_order: rows.length })
+      .select()
+      .single();
+
+    setAdding(false);
+
+    if (error) {
+      setAddStatus({ kind: "error", message: `Could not add a card: ${error.message}` });
+      return;
+    }
+
+    playSound("success");
+    const override = data as ProjectOverride;
+    setRows((current) => [
+      ...(current ?? []),
+      {
+        base: stubBase(slug),
+        override,
+        added: true,
+        draft: draftFrom(override),
+        saving: false,
+        status: {
+          kind: "saved",
+          message: "Card created, and hidden until you fill it in and show it.",
+        },
+      },
+    ]);
   };
 
   const onMove = async (slug: string, direction: -1 | 1) => {
@@ -242,6 +352,7 @@ export function ContentPanel() {
             isFirst={index === 0}
             isLast={index === rows.length - 1}
             hasOverride={Boolean(row.override)}
+            added={row.added}
             onChange={(patch) =>
               patchRow(row.base.slug, {
                 draft: { ...row.draft, ...patch },
@@ -257,6 +368,30 @@ export function ContentPanel() {
           />
         ))}
       </ul>
+
+      {/* Below the list rather than above it: the cards are what this panel is
+          for, and adding one is the rarer act. */}
+      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-rule pt-5">
+        <AdminButton onClick={() => void onAdd()} disabled={adding || !supabase}>
+          <Plus className="size-4" strokeWidth={1.5} aria-hidden="true" />
+          {adding ? "Adding a card" : "Add a card"}
+        </AdminButton>
+        <p className="text-sm font-light text-text-2">
+          New cards start hidden. Fill in the title, description, repository and
+          video, then show it.
+        </p>
+      </div>
+
+      {addStatus ? (
+        <p
+          role={addStatus.kind === "error" ? "alert" : "status"}
+          className={`mt-4 text-sm font-light ${
+            addStatus.kind === "error" ? "text-gold" : "text-text-2"
+          }`}
+        >
+          {addStatus.message}
+        </p>
+      ) : null}
 
       {orderStatus ? (
         <p

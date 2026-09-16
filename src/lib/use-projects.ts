@@ -33,24 +33,62 @@ function applyOverride(base: Project, override: ProjectOverride): Project {
   };
 }
 
+/**
+ * A row whose slug matches nothing in the repository is a card that exists only
+ * in the database — one added from the dashboard rather than committed.
+ *
+ * It has nothing to fall back on, so unlike an override every field a card
+ * renders has to be present. A half-filled row returns null and is skipped:
+ * the showcase would otherwise put a card with no title, or a video frame with
+ * no video, on the homepage.
+ */
+export function projectFromOverride(row: ProjectOverride): Project | null {
+  if (!row.title || !row.summary || !row.github_url || !row.youtube_id) return null;
+
+  return {
+    slug: row.slug,
+    repo: row.github_url.replace(/^https:\/\/github\.com\//, ""),
+    title: row.title,
+    summary: row.summary,
+    stack: row.stack?.length ? row.stack : [],
+    githubUrl: row.github_url,
+    youtubeId: row.youtube_id,
+  };
+}
+
 export function mergeProjects(
   base: Project[],
   overrides: ProjectOverride[],
 ): Project[] {
   const bySlug = new Map(overrides.map((row) => [row.slug, row]));
+  const committed = new Set(base.map((project) => project.slug));
 
-  return base
-    .map((project, index) => {
-      const override = bySlug.get(project.slug);
-      return {
-        project: override ? applyOverride(project, override) : project,
-        visible: override ? override.visible : true,
-        // Cards without an explicit position keep the order they are written
-        // in, which is what makes a partial reorder behave predictably.
-        order: override?.sort_order ?? index,
-        index,
-      };
+  const fromRepo = base.map((project, index) => {
+    const override = bySlug.get(project.slug);
+    return {
+      project: override ? applyOverride(project, override) : project,
+      visible: override ? override.visible : true,
+      // Cards without an explicit position keep the order they are written
+      // in, which is what makes a partial reorder behave predictably.
+      order: override?.sort_order ?? index,
+      index,
+    };
+  });
+
+  /* Added cards sort after the committed ones by default, which is where a new
+     card is created and where it stays until it is moved. */
+  const added = overrides
+    .filter((row) => !committed.has(row.slug))
+    .map((row, offset) => {
+      const project = projectFromOverride(row);
+      const index = base.length + offset;
+      return project
+        ? { project, visible: row.visible, order: row.sort_order ?? index, index }
+        : null;
     })
+    .filter((entry) => entry !== null);
+
+  return [...fromRepo, ...added]
     .filter((entry) => entry.visible)
     .sort((a, b) => a.order - b.order || a.index - b.index)
     .map((entry) => entry.project);

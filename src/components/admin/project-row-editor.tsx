@@ -39,7 +39,20 @@ export function draftFrom(override: ProjectOverride | null): Draft {
   };
 }
 
-export function validateDraft(draft: Draft): string | null {
+/**
+ * `added` is a card with no committed counterpart. An empty field on an
+ * override means "keep what the repository says"; on an added card it means
+ * the card has no title, or no video, and the showcase would refuse to render
+ * it — so the same blank that is the default in one case is an error in the
+ * other.
+ */
+export function validateDraft(draft: Draft, added = false): string | null {
+  if (added) {
+    if (!draft.title.trim()) return "An added card needs a title.";
+    if (!draft.summary.trim()) return "An added card needs a description.";
+    if (!draft.githubUrl.trim()) return "An added card needs a repository link.";
+    if (!draft.youtubeId.trim()) return "An added card needs a demo video.";
+  }
   if (draft.summary.length > SUMMARY_MAX) {
     return `The description is ${draft.summary.length} characters. The limit is ${SUMMARY_MAX}.`;
   }
@@ -87,6 +100,7 @@ export function ProjectRowEditor({
   isFirst,
   isLast,
   hasOverride,
+  added = false,
   onChange,
   onSave,
   onRevert,
@@ -101,6 +115,8 @@ export function ProjectRowEditor({
   isFirst: boolean;
   isLast: boolean;
   hasOverride: boolean;
+  /** True when this row is a card that exists only in the database. */
+  added?: boolean;
   onChange: (next: Partial<Draft>) => void;
   onSave: () => void;
   onRevert: () => void;
@@ -113,6 +129,10 @@ export function ProjectRowEditor({
   const reduced = useReducedMotion();
 
   const fieldId = (name: string) => `${base.slug}-${name}`;
+  /* On an override the placeholder is the committed value, which is what the
+     blank field will fall back to. An added card has no such value, so the
+     placeholder states what the field wants instead of sitting empty. */
+  const hint = (committed: string, want: string) => (added ? want : committed);
   const shownTitle = draft.title || base.title;
   const previewId = draft.youtubeId || base.youtubeId;
   const remaining = SUMMARY_MAX - draft.summary.length;
@@ -226,7 +246,7 @@ export function ProjectRowEditor({
                     id={fieldId("title")}
                     value={draft.title}
                     onChange={(e) => onChange({ title: e.target.value })}
-                    placeholder={base.title}
+                    placeholder={hint(base.title, "Core Framework")}
                     maxLength={80}
                     className={ADMIN_FIELD}
                   />
@@ -243,7 +263,7 @@ export function ProjectRowEditor({
                     id={fieldId("summary")}
                     value={draft.summary}
                     onChange={(e) => onChange({ summary: e.target.value })}
-                    placeholder={base.summary}
+                    placeholder={hint(base.summary, "What it does, in one or two sentences.")}
                     rows={6}
                     maxLength={SUMMARY_MAX}
                     aria-describedby={fieldId("summary-note")}
@@ -266,7 +286,7 @@ export function ProjectRowEditor({
                       id={fieldId("stack")}
                       value={draft.stack}
                       onChange={(e) => onChange({ stack: e.target.value })}
-                      placeholder={base.stack.join(", ")}
+                      placeholder={hint(base.stack.join(", "), "Luau, Roblox, Systems")}
                       className={ADMIN_FIELD}
                     />
                   </div>
@@ -277,7 +297,7 @@ export function ProjectRowEditor({
                       id={fieldId("github")}
                       value={draft.githubUrl}
                       onChange={(e) => onChange({ githubUrl: e.target.value })}
-                      placeholder={base.githubUrl}
+                      placeholder={hint(base.githubUrl, "https://github.com/severrir/repo-name")}
                       inputMode="url"
                       className={ADMIN_FIELD}
                     />
@@ -295,7 +315,7 @@ export function ProjectRowEditor({
                     value={draft.youtubeId}
                     onChange={(e) => onChange({ youtubeId: e.target.value })}
                     onBlur={(e) => onChange({ youtubeId: extractYoutubeId(e.target.value) })}
-                    placeholder={base.youtubeId}
+                    placeholder={hint(base.youtubeId, "Paste a YouTube link")}
                     spellCheck={false}
                     className={`${ADMIN_FIELD} font-mono`}
                   />
@@ -330,7 +350,38 @@ export function ProjectRowEditor({
                 </AdminButton>
               ) : null}
 
-              {hasOverride ? (
+              {/*
+                * The same button in two different jobs, because the two rows
+                * are different things. A committed card cannot be deleted from
+                * here — it lives in the repository — so the destructive action
+                * available to it is clearing its edits. An added card exists
+                * only in this table, so deleting the row deletes the card, and
+                * the wording says so rather than talking about "committed"
+                * values that were never there.
+                */}
+              {added ? (
+                confirmingReset ? (
+                  <span className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm font-light text-text-2">
+                      Delete this card for good?
+                    </span>
+                    <AdminButton
+                      tone="danger"
+                      onClick={() => {
+                        setConfirmingReset(false);
+                        onReset();
+                      }}
+                    >
+                      Delete card
+                    </AdminButton>
+                    <AdminButton onClick={() => setConfirmingReset(false)}>Keep</AdminButton>
+                  </span>
+                ) : (
+                  <AdminButton tone="danger" onClick={() => setConfirmingReset(true)}>
+                    Delete card
+                  </AdminButton>
+                )
+              ) : hasOverride ? (
                 confirmingReset ? (
                   <span className="flex flex-wrap items-center gap-3">
                     <span className="text-sm font-light text-text-2">
