@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local Claude Code settings — holds the Supabase access token.
+.claude/settings.local.json
