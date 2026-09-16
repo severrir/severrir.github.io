@@ -132,7 +132,10 @@ function ProjectCard({
             {project.summary}
           </p>
 
-          <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
+          {/* A rule, not a gap. The description is the claim and the row below
+              is what you do about it; separated, the column reads as two
+              things instead of one run of text that happens to end in tags. */}
+          <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-rule pt-7">
             <a
               href={project.githubUrl}
               target="_blank"
@@ -156,7 +159,10 @@ function ProjectCard({
           </div>
         </div>
 
-        <div className="min-w-0">
+        {/* The demo is set into the card rather than laid on top of it. The
+            padding is the lip of the recess; without it the thumbnail meets
+            the well's edge and the depth disappears. */}
+        <div className="card-well min-w-0 rounded-lg p-2">
           <VideoFacade
             youtubeId={project.youtubeId}
             title={project.title}
