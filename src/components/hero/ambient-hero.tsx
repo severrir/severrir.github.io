@@ -30,7 +30,7 @@ export function AmbientHero() {
 
       <div className="relative mx-auto w-full max-w-4xl text-center">
         <motion.p {...step(0)} className="flex justify-center">
-          <span className="specular inline-flex items-center gap-2.5 rounded-full px-4 py-1.5 text-[0.8125rem] text-text-2">
+          <span className="specular relative inline-flex items-center gap-2.5 rounded-full px-4 py-1.5 text-[0.8125rem] text-text-2">
             <span className="relative flex size-1.5">
               <span className="absolute inline-flex size-full rounded-full bg-gold opacity-60 motion-safe:animate-ping" />
               <span className="relative inline-flex size-1.5 rounded-full bg-gold" />

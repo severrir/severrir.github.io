@@ -7,7 +7,7 @@ export function NotFoundTrace() {
   const pathname = usePathname();
 
   return (
-    <pre className="specular overflow-x-auto rounded-lg p-6 text-left font-mono text-[0.8125rem] leading-relaxed sm:text-sm">
+    <pre className="panel relative overflow-x-auto rounded-lg p-6 text-left font-mono text-[0.8125rem] leading-relaxed sm:text-sm">
       <code>
         <span className="text-gold">
           site:1: attempt to index nil (field {"'"}

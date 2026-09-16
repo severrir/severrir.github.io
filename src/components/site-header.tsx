@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { EASE } from "./ui";
 import { SpinningBorderLink } from "./ui/spinning-border-button";
 import { SoundToggle } from "./sound-toggle";
+import { GithubMark } from "./github-mark";
 import { AccountChip } from "./auth/account-chip";
 import { useSound } from "@/lib/useSound";
 
@@ -128,22 +129,47 @@ export function SiteHeader() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.45, ease: EASE }}
-            className="overflow-hidden border-t border-rule md:hidden"
+            className="overflow-hidden border-t border-rule bg-bg md:hidden"
           >
-            <nav className="flex flex-col gap-1 px-[var(--gutter)] py-6" aria-label="Primary">
+            {/*
+             * A full sheet, not a dropdown. At two-thirds height the panel
+             * ended mid-page and the hero headline carried on underneath it,
+             * sliced through the middle of its own letterforms — which read as
+             * a rendering fault rather than as a menu over a page.
+             *
+             * The labels are set in the display serif at the size the page uses
+             * for a section heading. A phone menu is the whole screen for as
+             * long as it is open; there is no reason for it to whisper.
+             */}
+            <nav
+              className="flex min-h-[calc(100svh-4rem)] flex-col px-[var(--gutter)] pb-10 pt-2"
+              aria-label="Primary"
+            >
               {NAV.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="py-3 text-lg font-light text-text-2 transition-colors duration-200 hover:text-text"
+                  className="border-b border-rule py-5 font-serif text-[1.75rem] font-light leading-tight tracking-[-0.02em] text-text transition-colors duration-200 active:text-gold"
                   {...sound}
                 >
                   {item.label}
                 </Link>
               ))}
-              <span className="mt-4 block [&>a]:w-full">
+
+              <span className="mt-9 block [&>a]:w-full">
                 <SpinningBorderLink href="/booking">Start a project</SpinningBorderLink>
               </span>
+
+              <a
+                href="https://github.com/severrir"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-auto inline-flex items-center gap-2 pt-12 text-sm font-light text-text-2"
+                {...sound}
+              >
+                <GithubMark className="size-4" />
+                github.com/severrir
+              </a>
             </nav>
           </motion.div>
         ) : null}

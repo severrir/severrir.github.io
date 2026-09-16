@@ -16,9 +16,16 @@ export function CapabilityStrip() {
   const sound = useSound();
 
   return (
-    <section className="border-y border-rule px-[var(--gutter)] py-10">
-      <div className="mx-auto w-full max-w-6xl">
-        <ul className="flex flex-wrap items-center gap-x-8 gap-y-3 sm:gap-x-12">
+    /*
+     * The gutter moves onto the list at phone widths so the row can run off
+     * both edges of the screen. Wrapped, six names made a ragged two-line block
+     * that read as a grid that had failed; scrolled, they read as one line that
+     * continues past the edge — which is also the truth, since there are more
+     * disciplines than fit.
+     */
+    <section className="border-y border-rule py-10 md:px-[var(--gutter)]">
+      <div className="rail mx-auto w-full max-w-6xl">
+        <ul className="flex w-max items-center gap-x-8 px-[var(--gutter)] sm:gap-x-12 md:w-auto md:flex-wrap md:gap-y-3 md:px-0">
           {services.map((service) => (
             <li key={service.id}>
               <Link

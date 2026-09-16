@@ -20,7 +20,7 @@ const VARIANTS: Record<Variant, string> = {
     "bg-gold text-bg px-7 py-3.5 hover:bg-gold-hover " +
     "hover:shadow-[0_0_34px_-4px_rgb(212_175_55_/_0.28)]",
   /* Bevelled glass with a gold hairline that lights on hover. */
-  glass: "specular specular-hover text-text px-7 py-3.5",
+  glass: "specular specular-hover relative text-text px-7 py-3.5",
   quiet: "text-text-2 hover:text-text",
 };
 
@@ -65,7 +65,15 @@ export function ActionButton({
   );
 }
 
-/** Owns the vertical rhythm, so no two sections fight over their gap. */
+/**
+ * Owns the vertical rhythm, so no two sections fight over their gap.
+ *
+ * Half the intended gap on each side, because both sides always pay. At
+ * py-24/py-32 every seam between two sections came to 192–256px of nothing —
+ * the brief asks for that much *between* sections, and the page was charging it
+ * twice. The largest voids on the page, the one under the project pile in
+ * particular, were this and not a layout fault.
+ */
 export function Section({
   id,
   className = "",
@@ -76,11 +84,11 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <section className={`relative px-[var(--gutter)] py-24 sm:py-32 ${className}`}>
+    <section className={`relative px-[var(--gutter)] py-14 sm:py-20 ${className}`}>
       {/*
        * The anchor is a zero-height marker at the content edge rather than the
        * id sitting on the section box. With the id on the box, html's
-       * scroll-padding-top stacks on top of this section's own py-24/sm:py-32
+       * scroll-padding-top stacks on top of this section's own vertical padding
        * and every nav jump lands ~200px above the heading. Offset 2rem above the
        * heading so it arrives with air under the header, not jammed against it.
        */}
@@ -88,7 +96,7 @@ export function Section({
         <span
           id={id}
           aria-hidden="true"
-          className="pointer-events-none absolute left-0 top-16 block h-0 w-0 sm:top-24"
+          className="pointer-events-none absolute left-0 top-8 block h-0 w-0 sm:top-12"
         />
       ) : null}
       <div className="mx-auto w-full max-w-6xl">{children}</div>
@@ -149,7 +157,7 @@ export function SectionHeading({
   center?: boolean;
 }) {
   return (
-    <Reveal className={`mb-14 sm:mb-20 ${center ? "text-center" : ""}`}>
+    <Reveal className={`mb-12 sm:mb-16 ${center ? "text-center" : ""}`}>
       <h2
         className={`balance font-serif text-[length:var(--title)] font-light leading-[1.08] tracking-[-0.02em] ${
           center ? "mx-auto max-w-[20ch]" : ""

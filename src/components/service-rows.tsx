@@ -70,17 +70,35 @@ export function ServiceRows({ services }: { services: Service[] }) {
                 className="pointer-events-none absolute inset-0 bg-gradient-to-b from-gold/[0.04] to-transparent opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
               />
 
-              <div className="relative flex items-start gap-5">
-                <span className="grid size-11 shrink-0 place-items-center rounded-md border border-rule bg-surface shadow-[inset_0_1px_0_0_var(--edge-lip)] backdrop-blur-[12px] transition-colors duration-500 ease-out group-hover:border-edge-gold-strong">
-                  <Icon
-                    className="size-[1.125rem] text-text-2 transition-colors duration-500 ease-out group-hover:text-gold"
-                    strokeWidth={1.5}
-                    aria-hidden="true"
-                  />
-                </span>
-                <h2 className="mt-1 font-serif text-[length:var(--heading)] font-light leading-tight tracking-[-0.015em]">
-                  {service.name}
-                </h2>
+              {/* The pairings live up here rather than under the deliverables.
+                  In the right-hand column they were a third list competing with
+                  two others, and they left this column — an icon and three
+                  words against a full-height row — visibly empty. */}
+              <div className="relative">
+                <div className="flex items-start gap-5">
+                  <span className="specular relative grid size-11 shrink-0 place-items-center rounded-md transition-colors duration-500 ease-out">
+                    <Icon
+                      className="relative z-[1] size-[1.125rem] text-text-2 transition-colors duration-500 ease-out group-hover:text-gold"
+                      strokeWidth={1.5}
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <h2 className="mt-1 font-serif text-[length:var(--heading)] font-light leading-tight tracking-[-0.015em]">
+                    {service.name}
+                  </h2>
+                </div>
+
+                <p className="mt-6 flex flex-wrap items-center gap-x-2.5 gap-y-2 text-xs font-light text-text-2 lg:mt-8">
+                  <span className="text-text-2/70">Usually paired with</span>
+                  {service.pairsWith.map((id) => (
+                    <span
+                      key={id}
+                      className="rounded-full border border-rule px-2.5 py-0.5 text-[0.6875rem] transition-colors duration-500 ease-out group-hover:border-rule-strong"
+                    >
+                      {nameById.get(id)}
+                    </span>
+                  ))}
+                </p>
               </div>
 
               <div className="relative">
@@ -98,18 +116,6 @@ export function ServiceRows({ services }: { services: Service[] }) {
                     </li>
                   ))}
                 </ul>
-
-                <p className="mt-7 flex flex-wrap items-center gap-x-2.5 gap-y-2 text-xs font-light text-text-2">
-                  <span className="text-text-2/70">Usually paired with</span>
-                  {service.pairsWith.map((id) => (
-                    <span
-                      key={id}
-                      className="rounded-full border border-rule px-2.5 py-0.5 text-[0.6875rem] transition-colors duration-500 ease-out group-hover:border-rule-strong"
-                    >
-                      {nameById.get(id)}
-                    </span>
-                  ))}
-                </p>
               </div>
             </motion.article>
           );

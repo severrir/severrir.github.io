@@ -26,18 +26,14 @@ export function FaqList() {
               key={item.question}
               /* The border is always present and only changes colour, so
                  lighting an item cannot shift the rows below it. */
-              className={`relative rounded-md border px-5 transition-[background-color,border-color] duration-500 ease-out sm:px-6 ${
-                expanded
-                  ? "border-edge-gold bg-surface shadow-[inset_0_1px_0_0_var(--edge-lip)] backdrop-blur-[12px]"
-                  : "border-transparent border-b-rule"
+              /* The bottom border stays in the box model in both states and
+                 only changes colour, so opening a row cannot shift the rows
+                 under it by a pixel. The lit edge is .panel's masked ring,
+                 which costs no layout. */
+              className={`relative rounded-md border-b px-5 transition-[background,box-shadow,border-color] duration-500 ease-out sm:px-6 ${
+                expanded ? "panel border-transparent" : "border-rule"
               }`}
             >
-              {expanded ? (
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent sm:inset-x-6"
-                />
-              ) : null}
 
               <h3>
                 <button

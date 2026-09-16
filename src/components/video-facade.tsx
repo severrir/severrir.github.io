@@ -108,9 +108,21 @@ export function VideoFacade({
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : undefined}
           onError={() => setStage((s) => NEXT_STAGE[s])}
-          className="absolute inset-0 size-full object-cover opacity-70 transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.015] group-hover:opacity-90"
+          /*
+           * Graded into the page rather than dropped onto it. A YouTube still
+           * arrives at whatever saturation its uploader chose — a green jungle,
+           * a red title card — and full-strength it is the only thing on the
+           * page not made of obsidian and champagne. Pulled down and tinted
+           * cobalt it becomes part of the card; the grade lifts on hover, so
+           * the true frame is one gesture away and the change tells you the
+           * thumbnail is a control.
+           */
+          className="absolute inset-0 size-full object-cover opacity-80 saturate-[0.28] transition-[opacity,transform,filter] duration-700 ease-out group-hover:scale-[1.015] group-hover:opacity-100 group-hover:saturate-100"
         />
-        <span className="absolute inset-0 bg-gradient-to-t from-bg/80 via-bg/10 to-transparent" />
+        {/* The cobalt the grade is pulled toward, and the floor the label sits
+            on so it stays legible over a bright frame. */}
+        <span className="absolute inset-0 bg-[#16305F] mix-blend-color opacity-70 transition-opacity duration-700 ease-out group-hover:opacity-0" />
+        <span className="absolute inset-0 bg-gradient-to-t from-bg/85 via-bg/15 to-transparent" />
         <span className="absolute bottom-4 left-4 inline-flex items-center gap-2.5 rounded-md border border-rule-strong bg-bg/70 px-3.5 py-2 text-sm font-semibold text-text backdrop-blur-sm transition-colors duration-200 group-hover:border-edge-gold-strong group-hover:text-text">
           <Play className="size-3.5 fill-current" strokeWidth={0} aria-hidden="true" />
           Watch demo

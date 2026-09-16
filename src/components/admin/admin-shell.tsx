@@ -40,7 +40,7 @@ function Notice({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="specular mx-auto max-w-3xl rounded-lg p-7 sm:p-12">
+    <div className="panel relative mx-auto max-w-3xl rounded-lg p-7 sm:p-12">
       <span className="grid size-12 place-items-center rounded-full border border-edge-gold-strong">
         <ShieldAlert className="size-5 text-gold" strokeWidth={1.5} aria-hidden="true" />
       </span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MorphLoader } from "./morph-loader";
 
 const STORAGE_KEY = "severrir:booted";
@@ -19,6 +19,19 @@ const STORAGE_KEY = "severrir:booted";
  * once per visitor rather than once per tab.
  */
 export function BootScreen() {
+  /*
+   * The loader is client-only, and that is a correctness fix rather than a
+   * preference. framer serialises a motion element's first keyframe into inline
+   * CSS text on the server and re-applies it as a style object on the client;
+   * React reports every one of those as a hydration mismatch, which is what the
+   * dev overlay has been counting on every route. Nothing is lost by skipping
+   * the server pass — the curtain is display:none until an inline script
+   * decides otherwise, so this markup has never been visible before hydration.
+   */
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     const root = document.documentElement;
     if (!root.hasAttribute("data-booting")) return;
@@ -47,7 +60,7 @@ export function BootScreen() {
     <div className="boot-curtain" aria-hidden="true">
       <div className="bloom absolute inset-0" />
       <div className="relative flex flex-col items-center">
-        <MorphLoader label="Loading severrir" />
+        {mounted ? <MorphLoader label="Loading severrir" /> : <div className="size-[70px]" />}
         <p className="mt-10 font-serif text-lg font-light tracking-[-0.02em] text-text">
           severrir
         </p>

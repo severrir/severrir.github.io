@@ -60,6 +60,22 @@ export function AmbientField() {
   const limbX = useTransform(sx, [-1, 1], [-30, 30]);
   const limbY = useTransform(sy, [-1, 1], [-20, 20]);
 
+  /*
+   * Where the lens sits, in viewBox units.
+   *
+   * The field is drawn at 150% of the hero and centred under a `slice` fit, so
+   * the viewport only ever sees its middle — the pointer's -1..1 maps onto that
+   * window, not onto the whole viewBox. The exact crop shifts a little with the
+   * hero's aspect ratio; an ambient highlight does not need the last twenty
+   * pixels of accuracy, and chasing them would cost a resize observer.
+   *
+   * It runs on the raw pointer values rather than the spring: the arcs drift
+   * behind on the spring, and the lens sitting exactly under the cursor while
+   * they lag is what separates the two planes.
+   */
+  const lensX = useTransform(px, [-1, 1], [VIEW_W * 0.19, VIEW_W * 0.81]);
+  const lensY = useTransform(py, [-1, 1], [VIEW_H * 0.17, VIEW_H * 0.83]);
+
   useEffect(() => {
     // Touch fires pointermove only while a finger is down, so the parallax just
     // lurches; not worth the listener.
@@ -79,7 +95,7 @@ export function AmbientField() {
         return {
           id: i,
           d: `M ${FOCUS_X - r} ${FOCUS_Y} A ${r} ${r} 0 0 1 ${FOCUS_X + r} ${FOCUS_Y}`,
-          opacity: 0.05 + (i % 7) * 0.022,
+          opacity: 0.09 + (i % 7) * 0.034,
           width: i % 6 === 0 ? 1.1 : 0.6,
           duration: 34 + (i % 9) * 6,
           length: Math.PI * r,
@@ -132,6 +148,45 @@ export function AmbientField() {
             />
           ),
         )}
+
+        {/*
+         * The lens.
+         *
+         * The same arcs again, struck brighter, and visible only through a soft
+         * circular mask that tracks the pointer. Moving over the field lights
+         * the contours you are actually over, the way a raking light picks out
+         * a surface — the page's whole vocabulary is specular, and this is that
+         * idea at page scale rather than card scale.
+         *
+         * Free to run: one moving <circle> in a mask, no per-arc work, and it
+         * is not rendered at all when the hero is off-screen or the pointer is
+         * coarse.
+         */}
+        {!still && !coarse ? (
+          <>
+            <defs>
+              <radialGradient id="lens-fade">
+                <stop offset="0%" stopColor="#fff" stopOpacity="1" />
+                <stop offset="55%" stopColor="#fff" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+              </radialGradient>
+              <mask id="lens-mask">
+                <motion.circle cx={lensX} cy={lensY} r={340} fill="url(#lens-fade)" />
+              </mask>
+            </defs>
+            <g mask="url(#lens-mask)">
+              {arcs.map((arc) => (
+                <path
+                  key={`lens-${arc.id}`}
+                  d={arc.d}
+                  stroke="#7FA0C4"
+                  strokeWidth={arc.width * 1.3}
+                  strokeOpacity={Math.min(0.5, arc.opacity * 5)}
+                />
+              ))}
+            </g>
+          </>
+        ) : null}
       </motion.svg>
 
       {/* The lit limb: one arc carrying the champagne highlight and its bloom. */}
@@ -166,7 +221,7 @@ export function AmbientField() {
       </motion.svg>
 
       {/* Settle the field back into the page so it never competes with type. */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_55%_at_50%_48%,var(--bg)_0%,transparent_76%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_52%_46%_at_50%_46%,var(--bg)_0%,transparent_76%)]" />
       <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-bg to-transparent" />
     </div>
   );

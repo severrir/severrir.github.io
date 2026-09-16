@@ -138,7 +138,7 @@ export function ProjectRowEditor({
   const remaining = SUMMARY_MAX - draft.summary.length;
 
   return (
-    <li className="specular rounded-md">
+    <li className="specular relative rounded-md">
       <div className="flex items-center gap-3 p-3.5 sm:gap-4 sm:p-4">
         {/*
          * Move buttons rather than drag: they work from the keyboard, they

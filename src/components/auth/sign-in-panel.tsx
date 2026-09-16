@@ -20,7 +20,7 @@ import { SpinningBorderButton } from "../ui/spinning-border-button";
  * around exactly one.
  */
 
-const FRAME = "specular mx-auto max-w-3xl rounded-lg p-7 sm:p-12";
+const FRAME = "panel relative mx-auto max-w-3xl rounded-lg p-7 sm:p-12";
 
 export function SignInPanel({ returnTo = "/booking" }: { returnTo?: string }) {
   const { signInWithDiscord, unavailable } = useAuth();

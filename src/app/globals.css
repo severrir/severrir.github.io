@@ -116,24 +116,197 @@ body {
   background: radial-gradient(circle at 50% 0%, rgb(0 53 102 / 0.45), transparent 70%);
 }
 
-/* Bevelled glass surface: gold hairline plus a lit top lip. */
+/*
+ * --- Surfaces ---------------------------------------------------------
+ *
+ * Declared inside `components` so that every Tailwind utility still outranks
+ * them. Unlayered CSS beats anything in a layer, and these rules set
+ * `position` — outside a layer, `.specular` would quietly override the
+ * `absolute` on the account menu and drop it back into the flow.
+ *
+ * The rule every lifted surface here obeys: a raised plane is *lit*, it is not
+ * *filled*. A rectangle painted one flat value brighter than the page is a
+ * pale rectangle sitting on the page — the square of light this design kept
+ * producing on every card and panel. So the fill stays within a few steps of
+ * the ground, and what separates the plane from the page is a key light
+ * anchored to one corner that dies before it reaches the opposite two edges.
+ * Two of the four edges fall back into the ground, and the shape stops reading
+ * as a plate.
+ */
+
+@layer components {
+/* Small chrome: badges, dropdowns, segmented controls, glass buttons. */
 .specular {
-  background: var(--surface);
-  border: 1px solid var(--edge-gold);
-  box-shadow: inset 0 1px 0 0 var(--edge-lip);
+  position: relative;
+  background:
+    radial-gradient(64% 260% at 50% -60%, rgb(46 76 134 / 0.34), transparent 74%),
+    rgb(9 16 36 / 0.5);
   backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 0 var(--edge-lip);
+}
+
+/*
+ * Large glass surfaces — pricing panel, closing CTA, booking form, the open
+ * FAQ row. Same light, more of it, and a cast shadow, because these are the
+ * surfaces big enough for a flat fill to be unmissable. The second radial is
+ * a darkener in the far corner: without something actively pulling that corner
+ * down, a translucent panel over a dark page still ends up uniform.
+ */
+.panel {
+  position: relative;
+  /*
+   * The lamp hangs above the middle of the panel, not over its top-left
+   * corner. Anchored at a corner it was brightest exactly where two edges meet,
+   * which lit both of them for their full length and drew the rectangle more
+   * sharply than a flat fill ever did. Centred, all four corners fall to the
+   * page value and the shape has nothing left to outline it.
+   *
+   * The horizontal radius is a percentage so the light stays proportioned to
+   * the panel; the vertical one is a length, because a lamp does not get taller
+   * when the panel below it does — which is exactly what flooded the tall
+   * phone-width cards with blue.
+   */
+  background:
+    radial-gradient(44% 380px at 50% -110px, rgb(50 82 148 / 0.36), transparent 72%),
+    radial-gradient(70% 60% at 0% 100%, rgb(2 5 14 / 0.45), transparent 62%),
+    radial-gradient(70% 60% at 100% 100%, rgb(2 5 14 / 0.45), transparent 62%),
+    rgb(8 14 32 / 0.55);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    inset 0 1px 0 0 var(--edge-lip),
+    inset 0 -1px 0 0 rgb(1 3 10 / 0.5),
+    var(--lift);
+}
+
+/*
+ * The hairline, as a masked gradient ring rather than a border.
+ *
+ * A `border` is one value the whole way round, which is the other half of why
+ * these surfaces read as rectangles: an outline of constant brightness draws
+ * the shape whatever the fill underneath is doing. This ring is brightest at
+ * the lit corner and gone by the far one, so the edge describes where the
+ * light is instead of tracing a box.
+ */
+.specular::after,
+.panel::after,
+.card-lift::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    168deg,
+    rgb(212 175 55 / 0.42),
+    rgb(212 175 55 / 0.14) 30%,
+    rgb(148 163 184 / 0.07) 62%,
+    rgb(148 163 184 / 0.02)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  transition:
+    background 0.35s var(--ease),
+    opacity 0.35s var(--ease);
 }
 
 .specular-hover {
-  transition:
-    border-color 0.25s var(--ease),
-    box-shadow 0.25s var(--ease);
+  transition: box-shadow 0.25s var(--ease);
 }
 .specular-hover:hover {
-  border-color: var(--edge-gold-strong);
   box-shadow:
     inset 0 1px 0 0 var(--edge-lip),
     var(--glow-gold);
+}
+.specular-hover:hover::after {
+  background: linear-gradient(
+    148deg,
+    rgb(229 193 88 / 0.8),
+    rgb(212 175 55 / 0.3) 40%,
+    rgb(148 163 184 / 0.08)
+  );
+}
+
+/*
+ * --- Pointer specular -------------------------------------------------
+ *
+ * The one thing a still image cannot fake: the highlight moves with you.
+ * A surface carrying .lume gets two layers driven by --mx/--my, which
+ * use-specular.ts writes on pointermove — and never on a touch device, where
+ * there is no pointer to follow and the listener would only cost battery.
+ *
+ *   .lume::before   a wide, very low champagne wash under the content: the
+ *                   light falling on the face
+ *   .lume-rim       the same light caught on the 1px edge, which is what makes
+ *                   the plane read as bevelled glass rather than as a panel
+ *                   with a lamp behind it
+ *
+ * Both are hover-gated, so nothing moves until the visitor does.
+ */
+.lume::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s var(--ease);
+  background: radial-gradient(
+    460px circle at var(--mx, 50%) var(--my, 0%),
+    rgb(212 175 55 / 0.09),
+    rgb(64 104 178 / 0.05) 38%,
+    transparent 62%
+  );
+}
+.lume:hover::before {
+  opacity: 1;
+}
+
+/*
+ * ::before is generated as the surface's first child, so any positioned
+ * sibling after it paints on top without needing a z-index of its own. Without
+ * this the wash — a positioned box — would paint over the in-flow text under
+ * it, and every headline inside a lit panel would sit behind the light instead
+ * of in it.
+ */
+.lume > *:not(.lume-rim) {
+  position: relative;
+}
+
+.lume-rim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s var(--ease);
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, 50%),
+    rgb(240 214 138 / 0.9),
+    rgb(212 175 55 / 0.22) 42%,
+    transparent 70%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+.lume:hover .lume-rim {
+  opacity: 1;
 }
 
 /*
@@ -166,47 +339,46 @@ body {
    * below it stays a flat slab.
    */
   /*
-   * One gradient, running straight down the card. There was a radial highlight
-   * over the top-left as well, meant to read as the light the bevel implies —
-   * but the dark well of the demo cut a hard edge through it, and a soft glow
-   * with a straight edge through it stops being light and becomes a pale
-   * rectangle sitting on the card. Light that any element on top can crop is
-   * light that will eventually look like a shape.
+   * A vertical ramp used to run this face, from #1C3059 at the top edge down
+   * to near-black. That top value is five steps above the page, and it ran the
+   * full width of the card at a constant brightness — which is precisely the
+   * recipe for a lit rectangle. At phone widths, where the card is 700px tall
+   * and the ramp had nowhere to resolve, it was simply a blue plate.
+   *
+   * So: a base barely above the ground, and one lamp hanging above the middle
+   * of the card — a fixed height above it, so a 1000px phone card is not lit
+   * proportionally harder than a 430px desktop one. All four corners sit at the
+   * page value; the card is described by the light falling on it and the shadow
+   * under it, not by its own fill.
    */
-  background: linear-gradient(
-    180deg,
-    #1c3059 0%,
-    #16264b 22%,
-    #101d40 52%,
-    #090f26 100%
-  );
-  border: 1px solid var(--edge-gold);
+  background:
+    radial-gradient(46% 430px at 50% -130px, rgb(54 88 156 / 0.4), transparent 72%),
+    radial-gradient(70% 55% at 0% 100%, rgb(2 4 12 / 0.5), transparent 62%),
+    radial-gradient(70% 55% at 100% 100%, rgb(2 4 12 / 0.5), transparent 62%),
+    linear-gradient(178deg, #080e1f 0%, #05091a 58%, #04070f 100%);
   /*
-   * Four things, outside to in: the cast shadow that holds the card off the
-   * page, a dark ring just inside the border so the gold hairline reads as the
-   * top of a bevel rather than as an outline drawn on a flat shape, the lit lip
-   * along the top, and a dark lip along the bottom. A bevel needs both lips —
-   * with only the light one the card looks like it is lit from everywhere, and
-   * an edge lit from everywhere has no thickness.
+   * Three things, outside to in: the cast shadow that holds the card off the
+   * page, the lit lip along the top, and a dark lip along the bottom. A bevel
+   * needs both lips — with only the light one the card looks lit from
+   * everywhere, and an edge lit from everywhere has no thickness. The hairline
+   * itself is the masked ring in ::after, so it can fade round the shape.
    */
   box-shadow:
     inset 0 1px 0 0 var(--edge-lip),
     inset 0 -1px 0 0 rgb(1 3 10 / 0.65),
-    inset 0 0 0 1px rgb(1 3 10 / 0.45),
     var(--lift);
-  transition:
-    border-color 0.45s var(--ease),
-    box-shadow 0.45s var(--ease);
+  transition: box-shadow 0.45s var(--ease);
 }
 
 /*
- * Hover deepens the shadow and brings the hairline up, rather than adding a
- * glow around the edge. The card gets closer to you; it does not light up.
+ * Hover deepens the shadow rather than adding a glow around the edge. The card
+ * gets closer to you; it does not light up. The travelling highlight is the
+ * .lume pair, which answers the pointer instead of the whole card.
  */
 .card-lift:hover {
-  border-color: var(--edge-gold-strong);
   box-shadow:
     inset 0 1px 0 0 var(--edge-lip),
+    inset 0 -1px 0 0 rgb(1 3 10 / 0.65),
     var(--lift-high);
 }
 
@@ -220,11 +392,47 @@ body {
  * as a recess the moment the eye lands on it.
  */
 .card-well {
-  background: #070d20;
-  border: 1px solid rgb(248 250 252 / 0.05);
+  /* Below the page value, not merely below the card's: the face around it now
+     sits close to the ground, so a well at #070D20 was the same material with
+     a shadow drawn on it. A recess has to be darker than everything near it. */
+  background: #02050e;
   box-shadow:
-    inset 0 2px 14px rgb(1 3 10 / 0.8),
-    inset 0 1px 2px rgb(1 3 10 / 0.9);
+    inset 0 2px 16px rgb(0 0 0 / 0.9),
+    inset 0 1px 2px rgb(0 0 0 / 1),
+    inset 0 0 0 1px rgb(0 0 0 / 0.6),
+    /* the far lip of the recess, catching the same key light as the face */
+      0 1px 0 0 rgb(255 255 255 / 0.05);
+}
+
+/*
+ * A row that runs off the edge instead of wrapping.
+ *
+ * Six discipline names wrapped into a ragged two-line block at phone widths and
+ * read as a failed grid. Scrolled, they read as one line that continues — and
+ * the mask makes the continuation legible without a scrollbar or an arrow.
+ */
+.rail {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 var(--gutter),
+    #000 calc(100% - var(--gutter)),
+    transparent
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 var(--gutter),
+    #000 calc(100% - var(--gutter)),
+    transparent
+  );
+}
+.rail::-webkit-scrollbar {
+  display: none;
 }
 
 /*
@@ -250,6 +458,7 @@ body {
   background:
     radial-gradient(90% 45% at 50% 28%, rgb(0 53 102 / 0.42), transparent 72%),
     radial-gradient(70% 34% at 82% 74%, rgb(16 30 63 / 0.55), transparent 70%);
+}
 }
 
 /* --- Browser surfaces: theme what the browser would otherwise decide --- */
@@ -383,6 +592,21 @@ textarea:-webkit-autofill {
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;
+  }
+
+  /**
+   * The schematics are the one place descendants have to be pinned too. Framer
+   * draws a stroke by animating stroke-dasharray/dashoffset, which the rule
+   * above cannot reach — left alone, every line in every diagram sits at zero
+   * length and the drawing is blank. Faintness inside a schematic is carried
+   * by stroke-opacity and fill-opacity attributes, never by `opacity`, so
+   * forcing opacity here restores the animated elements without flattening the
+   * drawing's own tonal range.
+   */
+  [data-schematic] * {
+    opacity: 1 !important;
+    stroke-dasharray: none !important;
+    stroke-dashoffset: 0 !important;
   }
   *,
   *::before,

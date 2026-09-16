@@ -8,6 +8,7 @@ import { tiers } from "@/data/pricing";
 import { EASE, Section, SectionHeading } from "../ui";
 import { SpinningBorderLink } from "../ui/spinning-border-button";
 import { useSound } from "@/lib/useSound";
+import { useSpecular } from "@/lib/use-specular";
 
 /**
  * A glass segmented selector over one detail panel.
@@ -26,6 +27,7 @@ export function GlassRadioPricing() {
   const tier = tiers.find((t) => t.id === active) ?? tiers[0];
 
   const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const trackSpecular = useSpecular<HTMLDivElement>();
 
   /*
    * Arrow keys move between options and wrap at both ends, which is what a
@@ -62,7 +64,7 @@ export function GlassRadioPricing() {
            * Four segments in one row leaves ~78px each at 360px, which wraps or
            * clips every label. Two-up on phones, single row from sm.
            */
-          className="specular grid w-full max-w-2xl grid-cols-2 gap-1 rounded-lg p-1.5 sm:flex sm:rounded-full"
+          className="specular relative grid w-full max-w-2xl grid-cols-2 gap-1 rounded-lg p-1.5 sm:flex sm:rounded-full"
         >
           {tiers.map((option) => {
             const selected = option.id === active;
@@ -112,9 +114,12 @@ export function GlassRadioPricing() {
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? undefined : { opacity: 0, y: -10 }}
             transition={{ duration: 0.45, ease: EASE }}
-            className="specular rounded-lg p-8 sm:p-12"
+            onPointerMove={trackSpecular}
+            className="panel lume relative rounded-lg p-7 sm:p-12"
           >
-            <div className="flex flex-wrap items-start justify-between gap-6">
+            <span aria-hidden="true" className="lume-rim" />
+
+            <div className="relative z-[1] flex flex-wrap items-start justify-between gap-6">
               <div>
                 <p className="tabular font-serif text-[length:var(--title)] font-light leading-none tracking-[-0.03em]">
                   {tier.price}

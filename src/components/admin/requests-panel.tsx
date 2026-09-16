@@ -159,7 +159,7 @@ function RequestRow({
   };
 
   return (
-    <li className="specular rounded-md">
+    <li className="specular relative rounded-md">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

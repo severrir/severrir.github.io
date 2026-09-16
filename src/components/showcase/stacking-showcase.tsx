@@ -11,9 +11,11 @@ import {
 } from "framer-motion";
 import { type Project } from "@/data/projects";
 import { useProjects } from "@/lib/use-projects";
+import { useSpecular } from "@/lib/use-specular";
 import { GithubMark } from "../github-mark";
 import { VideoFacade } from "../video-facade";
 import { Section, SectionHeading } from "../ui";
+import { ProjectSchematic } from "./project-schematic";
 
 /**
  * Stacking scroll cards with weighted inertia.
@@ -97,6 +99,7 @@ function ProjectCard({
   progress: MotionValue<number>;
   reduced: boolean;
 }) {
+  const trackSpecular = useSpecular<HTMLElement>();
   const start = index / total;
   const targetScale = 1 - (total - index) * 0.03;
 
@@ -112,15 +115,15 @@ function ProjectCard({
   const dim = useTransform(progress, [start, 1], [0, 0.72]);
 
   const card = (
-    <article className="card-lift group relative overflow-hidden rounded-lg">
-      {/* Champagne hairline catching light along the top edge of the card. */}
-      <span
-        aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/45 to-transparent"
-      />
+    <article
+      onPointerMove={trackSpecular}
+      className="card-lift lume group relative overflow-hidden rounded-lg"
+    >
+      {/* The travelling highlight caught on the card's own edge. */}
+      <span aria-hidden="true" className="lume-rim" />
 
-      <div className="grid gap-8 p-7 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-14">
-        <div className="flex min-w-0 flex-col justify-center">
+      <div className="relative z-[1] grid gap-8 p-6 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-14">
+        <div className="flex min-w-0 flex-col">
           {/* The card opens on the title. What stood here was a repository path
               in monospace — an eyebrow above the heading, which the heading
               never needed; the repository is one click away under it. */}
@@ -131,6 +134,13 @@ function ProjectCard({
           <p className="pretty mt-5 max-w-[46ch] text-[0.9375rem] font-light leading-relaxed text-text-2">
             {project.summary}
           </p>
+
+          {/* The drawing takes the slack the column used to carry as air, and
+              is the reason the copy sits at the top of the card rather than
+              floating in the middle of it. */}
+          <div className="mt-8 flex flex-1 items-center py-1">
+            <ProjectSchematic slug={project.slug} />
+          </div>
 
           {/* A rule, not a gap. The description is the claim and the row below
               is what you do about it; separated, the column reads as two
@@ -162,7 +172,7 @@ function ProjectCard({
         {/* The demo is set into the card rather than laid on top of it. The
             padding is the lip of the recess; without it the thumbnail meets
             the well's edge and the depth disappears. */}
-        <div className="card-well min-w-0 rounded-lg p-2">
+        <div className="card-well min-w-0 self-start rounded-lg p-2">
           <VideoFacade
             youtubeId={project.youtubeId}
             title={project.title}
@@ -187,7 +197,14 @@ function ProjectCard({
      * it. Pinned to the top, the slack sits below each card instead, where the
      * next card rises through it.
      */
-    <div className="sticky top-24 flex min-h-[74svh] items-start justify-center">
+    /*
+     * 74svh is the scroll distance each card gets, and every card but the last
+     * needs it: the slack below a card is where the next one rises from. The
+     * last card has nothing rising after it, so its slack was simply a
+     * 300-pixel hole between the pile and the pricing section — the largest
+     * piece of nothing on the page.
+     */
+    <div className="sticky top-24 flex min-h-[74svh] items-start justify-center last:min-h-fit">
       <motion.div
         style={{ scale, top: `${index * 24}px` }}
         className="relative w-full origin-top"

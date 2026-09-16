@@ -285,7 +285,7 @@ function CommissionForm({ user }: { user: User | null }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.85, ease: EASE }}
         role="status"
-        className="specular mx-auto max-w-2xl rounded-lg p-10 text-center sm:p-14"
+        className="panel relative mx-auto max-w-2xl rounded-lg p-10 text-center sm:p-14"
       >
         <span className="mx-auto grid size-12 place-items-center rounded-full border border-edge-gold-strong">
           <Check className="size-5 text-gold" strokeWidth={1.5} aria-hidden="true" />
@@ -371,7 +371,7 @@ function CommissionForm({ user }: { user: User | null }) {
         : "Sign in with Discord to send";
 
   return (
-    <form onSubmit={onSubmit} className="specular mx-auto max-w-3xl space-y-8 rounded-lg p-7 sm:p-12">
+    <form onSubmit={onSubmit} className="panel lume relative mx-auto max-w-3xl space-y-8 rounded-lg p-6 sm:p-12">
       <AccountStrip user={user} />
 
       <div className="grid gap-6 sm:grid-cols-2">
@@ -422,7 +422,7 @@ function CommissionForm({ user }: { user: User | null }) {
         <legend className="mb-3 text-sm text-text">Rough size</legend>
         {/* One shared pill slides between segments rather than four borders
             cross-fading, so the champagne rim travels with the selection. */}
-        <div className="specular flex flex-wrap gap-1 rounded-full p-1.5">
+        <div className="specular relative grid grid-cols-2 gap-1 rounded-lg p-1.5 sm:flex sm:flex-wrap sm:rounded-full">
           {tiers.map((option) => {
             const active = option.id === tier;
             return (
@@ -431,14 +431,17 @@ function CommissionForm({ user }: { user: User | null }) {
                 type="button"
                 onClick={() => setTier(option.id)}
                 aria-pressed={active}
-                className="relative min-w-[7rem] flex-1 rounded-full px-3 py-2.5"
+                /* Square-cornered in the phone grid: a stadium pill inside a
+                   2×2 block turns the whole control into a lozenge with
+                   corners nothing sits in. */
+                className="relative rounded-md px-3 py-2.5 sm:min-w-[7rem] sm:flex-1 sm:rounded-full"
                 {...sound}
               >
                 {active ? (
                   <motion.span
                     layoutId="booking-tier-pill"
                     transition={{ duration: 0.45, ease: EASE }}
-                    className="absolute inset-0 rounded-full border border-edge-gold-strong bg-gradient-to-b from-white/[0.14] to-white/[0.02] shadow-[inset_0_1px_0_0_rgb(255_255_255_/_0.18)]"
+                    className="absolute inset-0 rounded-md border border-edge-gold-strong bg-gradient-to-b from-white/[0.14] to-white/[0.02] shadow-[inset_0_1px_0_0_rgb(255_255_255_/_0.18)] sm:rounded-full"
                   />
                 ) : null}
                 <span className="relative block text-center">
