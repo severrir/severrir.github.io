@@ -16,7 +16,22 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 /* Read as whole literal expressions — Next inlines these at build time by
    textual substitution, so a destructured or computed lookup finds nothing. */
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+/*
+ * Either spelling of the same key. Supabase's Connect panel now emits
+ * PUBLISHABLE_KEY with an `sb_publishable_…` value, while older projects and
+ * every existing deployment use ANON_KEY with a JWT. Both are the public
+ * browser key and both are passed to createClient the same way, so reading one
+ * name only would mean a correctly copied dashboard block silently leaving the
+ * site unconnected.
+ *
+ * `||` rather than `??`: an unset repository variable reaches the build as an
+ * empty string, not as undefined, and `??` would hand that empty string
+ * straight to createClient instead of falling through to the other name.
+ */
+const anonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 /**
  * False until the two environment variables are set. Everything downstream

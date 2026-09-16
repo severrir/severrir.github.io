@@ -17,12 +17,15 @@ connected yet rather than breaking.
 1. Sign up at [supabase.com](https://supabase.com) and create a project.
    Pick a region near you; the database password is only for direct SQL access
    and this site never uses it.
-2. Open **Settings → API** and copy two values:
+2. Open **Settings → API Keys** — or press **Connect** at the top of the
+   dashboard and pick **App Frameworks → Next.js**, which prints both of these
+   ready to paste — and copy two values:
    - **Project URL** — `https://<something>.supabase.co`
-   - **Project API keys → anon public**
+   - the public browser key: **publishable** (`sb_publishable_…`) on new
+     projects, **anon public** (a long JWT) on older ones
 
-Both are safe to commit and safe to paste anywhere. The anon key is the one
-browsers are meant to hold. It opens nothing on its own: every table has
+Both are safe to commit and safe to paste anywhere. The publishable key is the
+one browsers are meant to hold. It opens nothing on its own: every table has
 row-level security on, and a request made with it can do only what
 `supabase/schema.sql` explicitly permits.
 
@@ -72,7 +75,11 @@ can see and change what actually lives.
 | Name | Value |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | the Project URL from step 1 |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the anon public key from step 1 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the public browser key from step 1 |
+
+The key can also be named `NEXT_PUBLIC_SUPABASE_ANON_KEY`; the build reads
+either, so a variable copied straight out of the dashboard works unrenamed.
+Set one of the two, not both.
 
 Variables, not Secrets. Both values end up in the JavaScript bundle either way,
 and Secrets would only make them harder to read in the build log.

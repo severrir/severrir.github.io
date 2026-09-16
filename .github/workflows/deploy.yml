@@ -41,6 +41,10 @@ jobs:
           # If they are unset the site still builds; sign-in and the dashboard
           # report that they are not connected yet.
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          # Either name carries the public browser key — the Connect panel emits
+          # the first, older projects the second. Both are passed so a variable
+          # copied straight from the dashboard works without being renamed.
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Setup Pages
