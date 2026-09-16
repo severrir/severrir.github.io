@@ -68,6 +68,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-scroll-behavior="smooth"
+      /* The script below sets data-booting on this element before React
+         hydrates, which is the whole point of it — the curtain has to be
+         decided on the first frame. That guarantees the server HTML and the
+         client tree disagree here, and React logs a hydration mismatch for an
+         attribute it was never meant to own. This says so out loud; it
+         suppresses the warning for this element's attributes only, never for
+         anything rendered inside it. */
+      suppressHydrationWarning
       className={`${plexSans.variable} ${plexMono.variable} ${plexSerif.variable} h-full antialiased`}
     >
       <body className="grain flex min-h-full flex-col font-sans">
