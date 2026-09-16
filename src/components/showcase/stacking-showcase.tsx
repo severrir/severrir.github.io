@@ -67,7 +67,8 @@ export function StackingShowcase() {
         lede="Each repository solves one problem completely. The source is public — read it before commissioning anything."
       />
 
-      <div ref={container} className="relative">
+      {/* stage draws the light the pile moves through; the cards sit above it. */}
+      <div ref={container} className="stage relative">
         {projects.map((project, index) => (
           <ProjectCard
             key={project.slug}
@@ -111,7 +112,7 @@ function ProjectCard({
   const dim = useTransform(progress, [start, 1], [0, 0.55]);
 
   const card = (
-    <article className="specular specular-hover group relative overflow-hidden rounded-lg">
+    <article className="card-lift group relative overflow-hidden rounded-lg">
       {/* Champagne hairline catching light along the top edge of the card. */}
       <span
         aria-hidden="true"
@@ -120,12 +121,10 @@ function ProjectCard({
 
       <div className="grid gap-8 p-7 sm:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-14">
         <div className="flex min-w-0 flex-col justify-center">
-          <p className="flex min-w-0 items-center gap-2.5 font-mono text-xs tracking-tight text-text-2">
-            <span aria-hidden="true" className="h-px w-5 shrink-0 bg-gold/45" />
-            <span className="truncate">{project.repo}</span>
-          </p>
-
-          <h3 className="mt-5 font-serif text-[length:var(--heading)] font-light leading-tight tracking-[-0.015em]">
+          {/* The card opens on the title. What stood here was a repository path
+              in monospace — an eyebrow above the heading, which the heading
+              never needed; the repository is one click away under it. */}
+          <h3 className="font-serif text-[length:var(--heading)] font-light leading-tight tracking-[-0.015em]">
             {project.title}
           </h3>
 

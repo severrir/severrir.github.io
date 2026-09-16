@@ -26,9 +26,6 @@ function applyOverride(base: Project, override: ProjectOverride): Project {
     summary: override.summary ?? base.summary,
     stack: override.stack?.length ? override.stack : base.stack,
     githubUrl,
-    // repo is the label printed under the card, so it has to follow the URL it
-    // describes rather than keep pointing at the old repository.
-    repo: githubUrl.replace(/^https:\/\/github\.com\//, ""),
     youtubeId: override.youtube_id ?? base.youtubeId,
   };
 }
@@ -47,7 +44,6 @@ export function projectFromOverride(row: ProjectOverride): Project | null {
 
   return {
     slug: row.slug,
-    repo: row.github_url.replace(/^https:\/\/github\.com\//, ""),
     title: row.title,
     summary: row.summary,
     stack: row.stack?.length ? row.stack : [],

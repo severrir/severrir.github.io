@@ -35,7 +35,6 @@ type Row = {
 function stubBase(slug: string): Project {
   return {
     slug,
-    repo: "",
     title: "Untitled card",
     summary: "",
     stack: [],

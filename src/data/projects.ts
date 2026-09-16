@@ -1,6 +1,5 @@
 export type Project = {
   slug: string;
-  repo: string;
   title: string;
   summary: string;
   stack: string[];
@@ -11,7 +10,6 @@ export type Project = {
 export const projects: Project[] = [
   {
     slug: "roblox-core-framework",
-    repo: "severrir/roblox-core-framework",
     title: "Core Framework",
     summary:
       "Service and controller runtime for Roblox. Resolves dependencies at boot, orders lifecycle across the server/client boundary, and fails loudly when a module lies about what it needs.",
@@ -21,7 +19,6 @@ export const projects: Project[] = [
   },
   {
     slug: "proximity-interaction-sys",
-    repo: "severrir/proximity-interaction-sys",
     title: "Proximity Interaction",
     summary:
       "Spatial interaction layer for NPCs, doors, pickups and prompts. Buckets interactables into a broadphase grid so the per-frame cost tracks what is near the player, not how much exists in the place.",
@@ -31,7 +28,6 @@ export const projects: Project[] = [
   },
   {
     slug: "modular-ui-components",
-    repo: "severrir/modular-ui-components",
     title: "Modular UI",
     summary:
       "Component library for Roblox interfaces. One theme table drives every surface, layout primitives handle scaling across device classes, and state lives outside the view so screens stay reusable.",
@@ -41,7 +37,6 @@ export const projects: Project[] = [
   },
   {
     slug: "snake-twist-pygame",
-    repo: "severrir/snake-twist-pygame",
     title: "Snake, Twisted",
     summary:
       "Snake rebuilt in Pygame with altered collision and momentum rules. Written to test game feel with a fixed timestep and no engine doing the interpolation for you.",
@@ -51,7 +46,6 @@ export const projects: Project[] = [
   },
   {
     slug: "backend-matchmaking",
-    repo: "severrir/backend-matchmaking",
     title: "Matchmaking Service",
     summary:
       "Skill-based queueing that runs outside the game server. Widens rating bands as wait time grows, reserves slots atomically, and hands finished parties off without trusting the client.",
